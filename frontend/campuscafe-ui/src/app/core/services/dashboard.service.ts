@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { API_BASE_URL } from '../config/api.config';
 
 export interface DashboardOrder {
     id: number;
@@ -35,7 +36,7 @@ export interface Analytics {
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-    private apiUrl = 'http://localhost:3000/api/dashboard';
+    private apiUrl = `${API_BASE_URL}/dashboard`;
 
     constructor(private http: HttpClient, private authService: AuthService) { }
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE_URL } from '../config/api.config';
 import { Product } from './product.service';
 
 export interface Cafe {
@@ -29,7 +30,7 @@ export interface CafeCampaign {
 
 @Injectable({ providedIn: 'root' })
 export class CafeService {
-    private apiUrl = 'http://localhost:3000/api/cafes';
+    private apiUrl = `${API_BASE_URL}/cafes`;
 
     constructor(private http: HttpClient) { }
 

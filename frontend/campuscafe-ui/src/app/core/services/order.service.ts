@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { API_BASE_URL } from '../config/api.config';
 
 export interface OrderItem {
     itemId: number;
@@ -25,7 +26,7 @@ export interface Order {
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
-    private apiUrl = 'http://localhost:3000/api/orders';
+    private apiUrl = `${API_BASE_URL}/orders`;
 
     constructor(private http: HttpClient, private authService: AuthService) { }
 

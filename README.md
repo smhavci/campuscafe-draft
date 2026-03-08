@@ -38,7 +38,7 @@ As part of the future development phase, an AI-agent layer will be integrated to
    ```bash
    npm start
    ```
-   *The backend will run on `http://localhost:3000`.*
+    *The backend URL is centralized in `frontend/campuscafe-ui/src/app/core/config/api.config.ts`. By default, it points to the Render deployment.*
 
 ### Frontend Setup
 1. Navigate to the `frontend/campuscafe-ui` directory:

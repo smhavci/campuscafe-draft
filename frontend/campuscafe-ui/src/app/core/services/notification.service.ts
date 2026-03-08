@@ -1,10 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
+import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    private apiUrl = 'http://localhost:3000/api';
+    private apiUrl = API_BASE_URL;
     private pollInterval: any;
 
     orderDot = signal(false);

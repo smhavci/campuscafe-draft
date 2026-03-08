@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { API_BASE_URL } from '../config/api.config';
 
 export type UserRole = 'student' | 'teacher' | 'cafeOwner';
 
@@ -23,7 +24,7 @@ export interface AuthResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-    private apiUrl = 'http://localhost:3000/api/auth';
+    private apiUrl = `${API_BASE_URL}/auth`;
 
     currentUser = signal<User | null>(null);
     token = signal<string | null>(null);

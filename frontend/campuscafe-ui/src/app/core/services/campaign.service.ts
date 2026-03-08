@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE_URL } from '../config/api.config';
 
 export interface Campaign {
     id: number;
@@ -18,7 +19,7 @@ export interface Campaign {
 
 @Injectable({ providedIn: 'root' })
 export class CampaignService {
-    private apiUrl = 'http://localhost:3000/api/campaigns';
+    private apiUrl = `${API_BASE_URL}/campaigns`;
 
     constructor(private http: HttpClient) { }
 
