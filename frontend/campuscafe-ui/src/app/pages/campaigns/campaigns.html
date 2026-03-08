@@ -1,0 +1,19 @@
+<div class="campaigns-page">
+    <div class="page-header">
+        <span class="page-badge">🔥 Hot Deals</span>
+        <h1 class="page-title">Campaigns & Offers</h1>
+        <p class="page-subtitle">Exclusive discounts and student-friendly specials</p>
+    </div>
+
+    <div class="campaigns-grid">
+        @for (campaign of campaigns(); track campaign.id) {
+        <app-campaign-card [campaign]="campaign" />
+        }
+    </div>
+
+    @if (campaigns().length === 0) {
+    <div class="empty-state">
+        <p>No active campaigns right now. Check back soon!</p>
+    </div>
+    }
+</div>

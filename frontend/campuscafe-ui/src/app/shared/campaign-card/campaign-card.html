@@ -1,0 +1,15 @@
+<a [routerLink]="['/cafe', campaign.cafeSlug]" class="campaign-card">
+    <div class="campaign-image-wrapper">
+        <img [src]="campaign.image" [alt]="campaign.title" class="campaign-image" loading="lazy" />
+        <span class="campaign-badge">{{ campaign.badge }}</span>
+        <span class="campaign-discount">{{ campaign.discount }}</span>
+    </div>
+    <div class="campaign-body">
+        <h3 class="campaign-title">{{ campaign.title }}</h3>
+        <p class="campaign-description">{{ campaign.description }}</p>
+        <div class="campaign-footer">
+            <span class="campaign-cafe">☕ {{ campaign.cafeName }}</span>
+            <span class="campaign-valid">{{ campaign.validUntil }} tarihine kadar</span>
+        </div>
+    </div>
+</a>

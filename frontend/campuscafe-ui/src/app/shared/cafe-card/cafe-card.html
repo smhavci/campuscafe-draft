@@ -1,0 +1,19 @@
+<div class="cafe-card" [style.--accent]="cafe.color">
+    <div class="cafe-image-wrapper">
+        <img [src]="cafe.image" [alt]="cafe.name" class="cafe-image" loading="lazy" />
+        <div class="cafe-overlay">
+            <div class="cafe-rating">⭐ {{ cafe.rating }}</div>
+        </div>
+    </div>
+    <div class="cafe-body">
+        <h3 class="cafe-name">{{ cafe.name }}</h3>
+        <p class="cafe-description">{{ cafe.description }}</p>
+        <div class="cafe-info">
+            <span class="cafe-hours">🕐 {{ cafe.openHours }}</span>
+            <span class="cafe-location">📍 {{ cafe.location }}</span>
+        </div>
+        <a [routerLink]="['/cafe', cafe.slug]" class="cafe-view-btn">
+            Menüyü Gör →
+        </a>
+    </div>
+</div>

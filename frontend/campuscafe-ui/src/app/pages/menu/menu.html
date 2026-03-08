@@ -1,0 +1,30 @@
+<div class="menu-page">
+    <div class="page-header">
+        <h1 class="page-title">Our Menu</h1>
+        <p class="page-subtitle">Explore our selection of handcrafted drinks and treats</p>
+    </div>
+
+    <div class="category-filters">
+        <button class="filter-btn" [class.active]="activeCategory() === 'all'" (click)="filterByCategory('all')">
+            🍽️ All
+        </button>
+        @for (category of categories(); track category.id) {
+        <button class="filter-btn" [class.active]="activeCategory() === category.name"
+            (click)="filterByCategory(category.name)">
+            {{ category.icon }} {{ category.displayName }}
+        </button>
+        }
+    </div>
+
+    <div class="products-grid">
+        @for (product of filteredProducts(); track product.id) {
+        <app-product-card [product]="product" (addToCart)="onAddToCart($event)" />
+        }
+    </div>
+
+    @if (filteredProducts().length === 0) {
+    <div class="empty-state">
+        <p>No products found in this category.</p>
+    </div>
+    }
+</div>

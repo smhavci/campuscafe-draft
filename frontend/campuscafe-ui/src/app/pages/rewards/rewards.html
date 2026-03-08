@@ -1,0 +1,134 @@
+<div class="rewards-page">
+    <div class="page-header">
+        <h1 class="page-title">🎁 Kazançlarım</h1>
+        <p class="page-subtitle">Sadakat kartlarını takip et, ücretsiz ürünleri kazan</p>
+    </div>
+
+    @if (!authService.isLoggedIn()) {
+    <div class="not-logged-in">
+        <div class="lock-icon">🔒</div>
+        <h2>Giriş Gerekli</h2>
+        <p>Kazançlarını görmek için giriş yap.</p>
+        <a routerLink="/login" class="btn-primary">Giriş Yap</a>
+    </div>
+    } @else if (loading()) {
+    <div class="loading-state">
+        <p>Yükleniyor...</p>
+    </div>
+    } @else if (cards().length === 0) {
+    <div class="empty-state">
+        <div class="empty-icon">☕</div>
+        <h2>Henüz kartın yok</h2>
+        <p>Sokak Kahvecisi'nden kahve siparişi vererek damga toplamaya başla!</p>
+        <a routerLink="/cafe/sokak-kahvecisi" class="btn-primary">Sokak Kahvecisi'ne Git</a>
+    </div>
+    } @else {
+
+    @if (redeemMsg()) {
+    <div class="redeem-success">{{ redeemMsg() }}</div>
+    }
+    @if (redeemError()) {
+    <div class="redeem-error">{{ redeemError() }}</div>
+    }
+
+    @for (card of cards(); track card.id) {
+    <div class="loyalty-card" [style.--card-color]="card.cafeColor">
+        <!-- Card Header -->
+        <div class="card-header">
+            <div class="card-cafe-info">
+                <div class="cafe-logo">
+                    <span class="logo-icon">🚐</span>
+                </div>
+                <div>
+                    <h2 class="card-cafe-name">{{ card.cafeName }}</h2>
+                    <p class="card-subtitle">Sadakat Kartı</p>
+                </div>
+            </div>
+            @if (card.totalRedeemed > 0) {
+            <div class="redeemed-badge">
+                🎉 {{ card.totalRedeemed }} ücretsiz kahve kullanıldı
+            </div>
+            }
+        </div>
+
+        <!-- Stamp Grid -->
+        <div class="stamp-grid">
+            @for (filled of getStampArray(card.stamps); track $index) {
+            <div class="stamp-slot" [class.filled]="filled">
+                @if (filled) {
+                <div class="stamp-icon">
+                    <span class="stamp-van">🚐</span>
+                </div>
+                } @else {
+                <span class="stamp-number">{{ $index + 1 }}</span>
+                }
+            </div>
+            }
+            <!-- 10th slot = Free Coffee -->
+            <div class="stamp-slot free-slot" [class.ready]="canRedeem(card)">
+                <span class="free-label">🎁</span>
+                <span class="free-text">FREE</span>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" [style.width.%]="(card.stamps / 9) * 100"></div>
+            </div>
+            <span class="progress-text">{{ card.stamps }} / 9 damga</span>
+        </div>
+
+        <!-- Redeem Button -->
+        @if (canRedeem(card)) {
+        <button class="redeem-btn" (click)="openPicker(card)">
+            ☕ Ücretsiz Kahveni Al!
+        </button>
+        } @else {
+        <p class="card-info">
+            {{ 9 - card.stamps }} kahve daha → ücretsiz kahve 🎉
+        </p>
+        }
+    </div>
+    }
+    }
+</div>
+
+<!-- Coffee Picker Modal -->
+@if (showPicker()) {
+<div class="modal-overlay" (click)="closePicker()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>☕ Hangi kahveyi istersiniz?</h2>
+            <p>Sadakat kartınızla ücretsiz bir kahve seçin</p>
+            <button class="modal-close" (click)="closePicker()">✕</button>
+        </div>
+
+        @if (pickerLoading()) {
+        <div class="modal-loading">
+            <p>Menü yükleniyor...</p>
+        </div>
+        } @else {
+        <div class="coffee-list">
+            @for (coffee of coffeeOptions(); track coffee.id) {
+            <button class="coffee-option" (click)="selectCoffee(coffee)" [disabled]="redeemLoading()">
+                <img [src]="coffee.image" [alt]="coffee.name" class="coffee-img" />
+                <div class="coffee-info">
+                    <span class="coffee-name">{{ coffee.name }}</span>
+                    <span class="coffee-desc">{{ coffee.description }}</span>
+                    <span class="coffee-original-price">Normal fiyat: {{ coffee.price }}₺</span>
+                </div>
+                <div class="coffee-free-tag">BEDAVA</div>
+            </button>
+            }
+        </div>
+        }
+
+        @if (redeemLoading()) {
+        <div class="modal-loading">
+            <p>Sipariş oluşturuluyor...</p>
+        </div>
+        }
+    </div>
+</div>
+}

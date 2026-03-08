@@ -1,0 +1,41 @@
+<nav class="navbar">
+  <a routerLink="/" class="brand">☕ CampusCafe</a>
+  <div class="nav-links">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    <a routerLink="/campaigns" routerLinkActive="active">Kampanyalar</a>
+
+    @if (authService.isLoggedIn()) {
+    @if (authService.isOwner()) {
+    <a routerLink="/dashboard" routerLinkActive="active" class="dashboard-link nav-dot-wrapper">
+      📊 Dashboard
+      @if (notificationService.dashboardDot()) {
+      <span class="nav-dot"></span>
+      }
+    </a>
+    }
+    <a routerLink="/rewards" routerLinkActive="active">🎁 Kazançlarım</a>
+    <a routerLink="/cart" routerLinkActive="active" class="cart-link">
+      🛒 Sepet
+      @if (cartService.totalItems() > 0) {
+      <span class="cart-badge">{{ cartService.totalItems() }}</span>
+      }
+    </a>
+    <a routerLink="/orders" routerLinkActive="active" class="nav-dot-wrapper">
+      📦 Siparişlerim
+      @if (notificationService.orderDot()) {
+      <span class="nav-dot"></span>
+      }
+    </a>
+    <span class="user-name">
+      @if (authService.isOwner()) { ☕ }
+      @else if (authService.isTeacher()) { 👨‍🏫 }
+      @else { 👋 }
+      {{ authService.currentUser()?.firstName }}
+    </span>
+    <button class="logout-btn" (click)="logout()">Çıkış</button>
+    } @else {
+    <a routerLink="/login" routerLinkActive="active" class="login-link">Giriş Yap</a>
+    <a routerLink="/register" routerLinkActive="active" class="register-link">Kayıt Ol</a>
+    }
+  </div>
+</nav>

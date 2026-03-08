@@ -1,0 +1,107 @@
+.campaign-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    cursor: pointer;
+}
+
+.campaign-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(126, 200, 160, 0.25);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(126, 200, 160, 0.08);
+}
+
+.campaign-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.campaign-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.campaign-card:hover .campaign-image {
+    transform: scale(1.08);
+}
+
+.campaign-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(15, 15, 20, 0.7);
+    backdrop-filter: blur(10px);
+    color: #7ec8a0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(126, 200, 160, 0.2);
+}
+
+.campaign-discount {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #7ec8a0, #5aa87e);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(126, 200, 160, 0.3);
+}
+
+.campaign-body {
+    padding: 1.2rem;
+}
+
+.campaign-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+}
+
+.campaign-description {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+}
+
+.campaign-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.campaign-cafe {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #c8a97e;
+    background: rgba(200, 169, 126, 0.1);
+    border: 1px solid rgba(200, 169, 126, 0.15);
+    padding: 3px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.campaign-valid {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+    white-space: nowrap;
+}

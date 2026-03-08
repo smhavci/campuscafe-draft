@@ -1,0 +1,509 @@
+.rewards-page {
+    padding: 6rem 2rem 4rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.page-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+}
+
+.page-subtitle {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0;
+}
+
+/* States */
+.not-logged-in,
+.empty-state,
+.loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.lock-icon,
+.empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+
+.not-logged-in h2,
+.empty-state h2 {
+    color: #fff;
+    font-size: 1.6rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.not-logged-in p,
+.empty-state p {
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0 0 1.5rem 0;
+}
+
+.loading-state p {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #c8a97e, #a8865a);
+    color: #fff;
+    text-decoration: none;
+    padding: 0.85rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(200, 169, 126, 0.4);
+}
+
+/* Success / Error */
+.redeem-success {
+    background: rgba(126, 200, 160, 0.1);
+    border: 1px solid rgba(126, 200, 160, 0.2);
+    color: #7ec8a0;
+    padding: 0.8rem 1.2rem;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.redeem-error {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.2);
+    color: #ff6b6b;
+    padding: 0.8rem 1.2rem;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+/* Loyalty Card */
+.loyalty-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 1.8rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.loyalty-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--card-color, #e07a5f), #fbbf24);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.8rem;
+}
+
+.card-cafe-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.cafe-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--card-color, #e07a5f), rgba(255, 255, 255, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.logo-icon {
+    filter: grayscale(0);
+}
+
+.card-cafe-name {
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.card-subtitle {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.82rem;
+    margin: 0.1rem 0 0;
+}
+
+.redeemed-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    padding: 0.3rem 0.7rem;
+    border-radius: 8px;
+}
+
+/* Stamp Grid */
+.stamp-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+}
+
+.stamp-slot {
+    aspect-ratio: 1;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.stamp-slot.filled {
+    background: rgba(224, 122, 95, 0.12);
+    border: 2px solid rgba(224, 122, 95, 0.3);
+}
+
+.stamp-icon {
+    font-size: 1.6rem;
+    animation: stampIn 0.4s ease;
+}
+
+.stamp-van {
+    filter: none;
+}
+
+.stamp-number {
+    color: rgba(255, 255, 255, 0.15);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* Free slot */
+.free-slot {
+    background: rgba(251, 191, 36, 0.05);
+    border: 2px dashed rgba(251, 191, 36, 0.15);
+}
+
+.free-slot.ready {
+    background: rgba(251, 191, 36, 0.15);
+    border: 2px solid rgba(251, 191, 36, 0.4);
+    animation: readyPulse 1.5s ease-in-out infinite;
+}
+
+.free-label {
+    font-size: 1.4rem;
+}
+
+.free-text {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #fbbf24;
+    margin-top: 0.1rem;
+}
+
+/* Progress Bar */
+.progress-section {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+}
+
+.progress-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--card-color, #e07a5f), #fbbf24);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+.progress-text {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Redeem Button */
+.redeem-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #fbbf24, #e07a5f);
+    color: #fff;
+    border: none;
+    padding: 0.9rem;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    animation: readyPulse 1.5s ease-in-out infinite;
+}
+
+.redeem-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(251, 191, 36, 0.4);
+}
+
+.card-info {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Animations */
+@keyframes stampIn {
+    from {
+        transform: scale(0) rotate(-20deg);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes readyPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 20px 4px rgba(251, 191, 36, 0.15);
+    }
+}
+
+@media (max-width: 480px) {
+    .stamp-grid {
+        gap: 0.4rem;
+    }
+
+    .stamp-icon {
+        font-size: 1.2rem;
+    }
+
+    .card-header {
+        flex-direction: column;
+        gap: 0.8rem;
+        align-items: flex-start;
+    }
+}
+
+/* ── Coffee Picker Modal ────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+    background: #1a1a22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 1.8rem;
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.modal-header h2 {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem 0;
+}
+
+.modal-header p {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.modal-close {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255, 107, 107, 0.15);
+    color: #ff6b6b;
+}
+
+.modal-loading {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Coffee List */
+.coffee-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.coffee-option {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 0.7rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
+}
+
+.coffee-option:hover:not(:disabled) {
+    border-color: rgba(126, 200, 160, 0.3);
+    background: rgba(126, 200, 160, 0.06);
+    transform: translateX(4px);
+}
+
+.coffee-option:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.coffee-img {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.coffee-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.coffee-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.coffee-desc {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.coffee-original-price {
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 0.72rem;
+    text-decoration: line-through;
+}
+
+.coffee-free-tag {
+    background: linear-gradient(135deg, #7ec8a0, #5aa87e);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 0.35rem 0.7rem;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

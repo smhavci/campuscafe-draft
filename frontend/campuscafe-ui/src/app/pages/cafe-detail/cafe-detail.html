@@ -1,0 +1,96 @@
+@if (cafe()) {
+<div class="cafe-detail-page" [style.--accent]="cafe()!.color">
+    <!-- Hero Banner -->
+    <div class="cafe-hero">
+        <img [src]="cafe()!.image" [alt]="cafe()!.name" class="hero-bg" />
+        <div class="hero-overlay">
+            <a routerLink="/" class="back-btn">← Kafeler</a>
+            <div class="hero-info">
+                <div class="hero-rating">⭐ {{ cafe()!.rating }}</div>
+                <h1 class="hero-title">{{ cafe()!.name }}</h1>
+                <p class="hero-description">{{ cafe()!.description }}</p>
+                <div class="hero-meta">
+                    <span>🕐 {{ cafe()!.openHours }}</span>
+                    <span>📍 {{ cafe()!.location }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaigns Section -->
+    @if (visibleCampaigns().length > 0) {
+    <div class="campaigns-section">
+        <div class="section-header">
+            <h2 class="section-title">🎯 Kampanyalar</h2>
+            <p class="section-subtitle">{{ cafe()!.name }} özel fırsatları</p>
+        </div>
+        <div class="campaigns-scroll">
+            @for (campaign of visibleCampaigns(); track campaign.id) {
+            <button class="campaign-chip" [class.active]="activeCampaign()?.id === campaign.id"
+                (click)="activeCampaign()?.id === campaign.id ? clearCampaignFilter() : selectCampaign(campaign)">
+                <img [src]="campaign.image" [alt]="campaign.title" class="chip-img" />
+                <div class="chip-body">
+                    <span class="chip-badge">{{ campaign.badge }}</span>
+                    <span class="chip-title">{{ campaign.title }}</span>
+                    <span class="chip-discount">{{ campaign.discount }}</span>
+                </div>
+            </button>
+            }
+        </div>
+
+        @if (activeCampaign()) {
+        <div class="campaign-detail-banner">
+            <div class="banner-content">
+                <span class="banner-discount">{{ activeCampaign()!.discount }}</span>
+                <div>
+                    <strong>{{ activeCampaign()!.title }}</strong>
+                    <p>{{ activeCampaign()!.description }}</p>
+                </div>
+            </div>
+            <button class="banner-close" (click)="clearCampaignFilter()">✕ Filtreyi Kaldır</button>
+        </div>
+        }
+    </div>
+    }
+
+    <!-- Menu Section -->
+    <div class="menu-section">
+        <div class="section-header">
+            <h2 class="section-title">Menü</h2>
+            <p class="section-subtitle">
+                @if (activeCampaign()) {
+                Kampanya dahilindeki ürünler
+                } @else {
+                {{ cafe()!.name }} özel menüsünü keşfet
+                }
+            </p>
+        </div>
+
+        @if (!activeCampaign()) {
+        <div class="category-filters">
+            <button class="filter-btn" [class.active]="activeCategory() === 'all'" (click)="filterByCategory('all')">
+                🍽️ Tümü
+            </button>
+            @for (category of categories(); track category.id) {
+            <button class="filter-btn" [class.active]="activeCategory() === category.name"
+                (click)="filterByCategory(category.name)">
+                {{ category.icon }} {{ category.displayName }}
+            </button>
+            }
+        </div>
+        }
+
+        <div class="products-grid">
+            @for (product of filteredProducts(); track product.id) {
+            <app-product-card [product]="product" (addToCart)="onAddToCart($event)" />
+            }
+        </div>
+
+        @if (filteredProducts().length === 0) {
+        <div class="empty-state">
+            <p>Bu kategoride ürün bulunmuyor.</p>
+        </div>
+        }
+    </div>
+</div>
+}

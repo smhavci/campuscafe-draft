@@ -1,0 +1,325 @@
+.cafe-detail-page {
+    padding-top: 70px;
+}
+
+/* ── Hero Banner ────────────────────────────────────── */
+.cafe-hero {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    overflow: hidden;
+}
+
+.hero-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.45);
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 2rem;
+    background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);
+}
+
+.back-btn {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    background: rgba(15, 15, 20, 0.6);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.25s ease;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.hero-info {
+    max-width: 700px;
+}
+
+.hero-rating {
+    display: inline-block;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 8px;
+    margin-bottom: 0.8rem;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+}
+
+.hero-description {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 0.8rem 0;
+    line-height: 1.5;
+}
+
+.hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── Campaigns Section ─────────────────────────────── */
+.campaigns-section {
+    padding: 2.5rem 2rem 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.campaigns-scroll {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.campaigns-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+
+.campaigns-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.campaign-chip {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 0.6rem 1rem 0.6rem 0.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    color: inherit;
+    min-width: 260px;
+}
+
+.campaign-chip:hover {
+    border-color: rgba(126, 200, 160, 0.25);
+    background: rgba(126, 200, 160, 0.05);
+}
+
+.campaign-chip.active {
+    border-color: rgba(126, 200, 160, 0.4);
+    background: rgba(126, 200, 160, 0.1);
+    box-shadow: 0 0 20px rgba(126, 200, 160, 0.1);
+}
+
+.chip-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.chip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    text-align: left;
+}
+
+.chip-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #7ec8a0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chip-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.chip-discount {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+/* Campaign Detail Banner */
+.campaign-detail-banner {
+    margin-top: 1rem;
+    background: linear-gradient(135deg, rgba(126, 200, 160, 0.08), rgba(126, 200, 160, 0.02));
+    border: 1px solid rgba(126, 200, 160, 0.15);
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.banner-discount {
+    background: linear-gradient(135deg, #7ec8a0, #5aa87e);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.banner-content strong {
+    color: #fff;
+    font-size: 0.95rem;
+    display: block;
+}
+
+.banner-content p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.82rem;
+    margin: 0.2rem 0 0;
+    line-height: 1.4;
+}
+
+.banner-close {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: all 0.25s ease;
+}
+
+.banner-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* ── Menu Section ───────────────────────────────────── */
+.menu-section {
+    padding: 2.5rem 2rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.4rem 0;
+}
+
+.section-subtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+}
+
+.category-filters {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+}
+
+.filter-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0.55rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: inherit;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.filter-btn.active {
+    background: color-mix(in srgb, var(--accent, #c8a97e) 15%, transparent);
+    border-color: color-mix(in srgb, var(--accent, #c8a97e) 30%, transparent);
+    color: var(--accent, #c8a97e);
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.1rem;
+}
+
+@media (max-width: 640px) {
+    .cafe-hero {
+        height: 260px;
+    }
+
+    .hero-title {
+        font-size: 1.8rem;
+    }
+
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .campaign-chip {
+        min-width: 220px;
+    }
+
+    .campaign-detail-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+}

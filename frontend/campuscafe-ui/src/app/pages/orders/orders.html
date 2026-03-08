@@ -1,0 +1,64 @@
+<div class="orders-page">
+    <div class="page-header">
+        <span class="page-badge">📦 Sipariş Takibi</span>
+        <h1 class="page-title">Siparişlerim</h1>
+        <p class="page-subtitle">Geçmiş ve aktif siparişlerin</p>
+    </div>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <p>Siparişler yükleniyor...</p>
+    </div>
+    }
+
+    @if (!loading() && orders().length === 0) {
+    <div class="empty-state">
+        <span class="empty-icon">🛒</span>
+        <p>Henüz siparişin yok.</p>
+        <a routerLink="/" class="browse-btn">Kafeleri Keşfet</a>
+    </div>
+    }
+
+    <div class="orders-list">
+        @for (order of orders(); track order.id) {
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-id">
+                    <span class="order-label">Sipariş</span>
+                    <span class="order-number">#{{ order.id }}</span>
+                </div>
+                <span class="order-status" [class]="getStatusClass(order.status)">
+                    {{ getStatusLabel(order.status) }}
+                </span>
+            </div>
+
+            @if (order.cafeName) {
+            <div class="order-cafe">☕ {{ order.cafeName }}</div>
+            }
+
+            <div class="order-items">
+                @for (item of order.items; track item.itemId) {
+                <div class="order-item" [class.item-cancelled]="item.itemStatus === 'cancelled'">
+                    <span class="item-qty">{{ item.quantity }}x</span>
+                    <span class="item-name">
+                        {{ item.productName }}
+                        @if (item.itemStatus === 'cancelled') {
+                        <span class="cancelled-tag">İPTAL</span>
+                        }
+                    </span>
+                    <span class="item-price">{{ item.lineTotal }} ₺</span>
+                </div>
+                @if (item.itemStatus === 'cancelled' && item.cancelReason) {
+                <div class="cancel-reason">💬 {{ item.cancelReason }}</div>
+                }
+                }
+            </div>
+
+            <div class="order-footer">
+                <span class="order-date">{{ formatDate(order.createdAt) }}</span>
+                <span class="order-total">Toplam: <strong>{{ order.totalAmount }} ₺</strong></span>
+            </div>
+        </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,127 @@
+<div class="dashboard-page">
+    <div class="page-header">
+        <h1 class="page-title">📊 Dashboard</h1>
+        <p class="page-subtitle">Kafenizin sipariş ve satış yönetimi</p>
+    </div>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <p>Yükleniyor...</p>
+    </div>
+    } @else {
+
+    <!-- Analytics Cards -->
+    @if (analytics(); as a) {
+    <div class="analytics-grid">
+        <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <span class="stat-value">{{ a.orderCount }}</span>
+            <span class="stat-label">Bugünkü Sipariş</span>
+        </div>
+        <div class="stat-card revenue">
+            <span class="stat-icon">💰</span>
+            <span class="stat-value">{{ a.totalRevenue | currency:'TRY':'₺':'1.0-0' }}</span>
+            <span class="stat-label">Bugünkü Gelir</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">🏆</span>
+            <span class="stat-value">{{ a.topProducts.length > 0 ? a.topProducts[0].name : '—' }}</span>
+            <span class="stat-label">En Popüler</span>
+        </div>
+    </div>
+
+    @if (a.topProducts.length > 0) {
+    <div class="section">
+        <h2 class="section-title">🏆 Bugünün En Çok Satanları</h2>
+        <div class="top-products">
+            @for (p of a.topProducts; track p.name; let i = $index) {
+            <div class="top-product-row">
+                <span class="rank">{{ i + 1 }}</span>
+                <span class="product-name">{{ p.name }}</span>
+                <span class="product-qty">{{ p.totalQty }} adet</span>
+                <span class="product-sales">{{ p.totalSales | currency:'TRY':'₺':'1.0-0' }}</span>
+            </div>
+            }
+        </div>
+    </div>
+    }
+    }
+
+    <!-- Active Orders -->
+    <div class="section">
+        <h2 class="section-title">
+            🔔 Aktif Siparişler
+            @if (orders().length > 0) {
+            <span class="order-count">{{ orders().length }}</span>
+            }
+        </h2>
+
+        @if (orders().length === 0) {
+        <div class="empty-orders">
+            <p>Şu an aktif sipariş yok.</p>
+        </div>
+        } @else {
+        <div class="orders-list">
+            @for (order of orders(); track order.id) {
+            <div class="order-card" [class.ready]="order.status === 'ready'">
+                <div class="order-header">
+                    <div class="order-info">
+                        <span class="order-id">#{{ order.id }}</span>
+                        <span class="order-customer">{{ order.customerName }}</span>
+                        <span class="order-role">{{ getRoleLabel(order.customerRole) }}</span>
+                    </div>
+                    <div class="order-meta">
+                        <span class="order-status">{{ getStatusLabel(order.status) }}</span>
+                        <span class="order-total">{{ order.totalAmount | currency:'TRY':'₺':'1.0-0' }}</span>
+                    </div>
+                </div>
+
+                <div class="order-items">
+                    @for (item of order.items; track item.id) {
+                    <div class="order-item-row" [class.cancelled]="item.status === 'cancelled'">
+                        <span class="item-qty">{{ item.quantity }}x</span>
+                        <span class="item-name">
+                            {{ item.productName }}
+                            @if (item.status === 'cancelled') {
+                            <span class="item-cancelled-tag">İPTAL</span>
+                            }
+                        </span>
+                        @if (item.note && item.status === 'active') {
+                        <span class="item-note">📝 {{ item.note }}</span>
+                        }
+
+                        <!-- Per-item cancel -->
+                        @if (item.status === 'active') {
+                        @if (cancellingItemId() === item.id) {
+                        <div class="item-cancel-form">
+                            <input type="text" [(ngModel)]="cancelReason" placeholder="İptal sebebi (opsiyonel)"
+                                class="cancel-reason-input" />
+                            <button class="cancel-confirm-btn" (click)="confirmCancelItem(order.id, item.id)">✓</button>
+                            <button class="cancel-abort-btn" (click)="abortCancelItem()">✕</button>
+                        </div>
+                        } @else {
+                        <button class="item-cancel-btn" (click)="startCancelItem(item.id)">✕</button>
+                        }
+                        }
+                    </div>
+                    }
+                </div>
+
+                <div class="order-actions">
+                    @if (order.status === 'preparing') {
+                    <button class="action-btn ready-btn" (click)="updateStatus(order.id, 'ready')">✅ Hazır</button>
+                    }
+                    @if (order.status === 'ready') {
+                    <button class="action-btn deliver-btn" (click)="updateStatus(order.id, 'delivered')">📦 Teslim
+                        Et</button>
+                    }
+                    <button class="action-btn cancel-btn" (click)="updateStatus(order.id, 'cancelled')">❌ Tümünü
+                        İptal</button>
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+    }
+</div>

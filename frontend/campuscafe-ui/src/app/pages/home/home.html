@@ -1,0 +1,61 @@
+<section class="hero">
+    <div class="hero-content">
+        <span class="hero-badge">☕ Campus Coffee Experience</span>
+        <h1 class="hero-title">
+            Welcome to <span class="highlight">CampusCafe</span>
+        </h1>
+        <p class="hero-subtitle">
+            Akdeniz Üniversitesi kampüsündeki en sevilen kafeler tek bir yerde.
+            Kafeni seç, menüyü keşfet, siparişini ver.
+        </p>
+        <div class="hero-actions">
+            <a href="#cafes" class="btn-primary">Kafeleri Gör</a>
+            <a routerLink="/campaigns" class="btn-secondary">Kampanyalar</a>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="hero-glow"></div>
+        <!-- Live Clock -->
+        <div class="clock-widget">
+            <div class="clock-time">{{ currentTime() }}</div>
+            <div class="clock-date">{{ currentDate() }}</div>
+        </div>
+    </div>
+</section>
+
+<!-- Campus Cafes -->
+<section class="section" id="cafes">
+    <div class="section-header">
+        <h2 class="section-title">Kampüs Kafeleri</h2>
+        <p class="section-subtitle">Akdeniz Üniversitesi'ndeki kafelerimiz</p>
+    </div>
+    <div class="cafes-grid">
+        @for (cafe of cafes(); track cafe.id) {
+        <div class="cafe-card-wrapper">
+            <app-cafe-card [cafe]="cafe" />
+            <div class="cafe-status" [class.open]="isCafeOpen(cafe)" [class.closed]="!isCafeOpen(cafe)">
+                <span class="status-dot"></span>
+                {{ isCafeOpen(cafe) ? 'Açık' : 'Kapalı' }}
+                <span class="status-hours">{{ cafe.openHours }}</span>
+            </div>
+        </div>
+        }
+    </div>
+</section>
+
+@if (featuredCampaigns().length > 0) {
+<section class="section">
+    <div class="section-header">
+        <h2 class="section-title">Güncel Kampanyalar</h2>
+        <p class="section-subtitle">Öğrencilere özel fırsatları kaçırma</p>
+    </div>
+    <div class="campaigns-grid">
+        @for (campaign of featuredCampaigns(); track campaign.id) {
+        <app-campaign-card [campaign]="campaign" />
+        }
+    </div>
+    <div class="section-cta">
+        <a routerLink="/campaigns" class="btn-secondary">Tüm Kampanyaları Gör →</a>
+    </div>
+</section>
+}

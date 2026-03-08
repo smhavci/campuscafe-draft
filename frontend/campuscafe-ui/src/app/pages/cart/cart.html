@@ -1,0 +1,99 @@
+<div class="cart-page">
+    <div class="page-header">
+        <h1 class="page-title">Sepetim</h1>
+        <p class="page-subtitle">Siparişini gözden geçir</p>
+    </div>
+
+    @if (orderPlaced()) {
+    <div class="order-success">
+        <div class="success-icon">✅</div>
+        <h2>Sipariş Onaylandı!</h2>
+        <p>Siparişin başarıyla oluşturuldu. Afiyet olsun!</p>
+        <a routerLink="/orders" class="btn-primary">Siparişlerimi Gör</a>
+    </div>
+    } @else if (cartService.items().length === 0) {
+    <div class="empty-cart">
+        <div class="empty-icon">🛒</div>
+        <h2>Sepetin boş</h2>
+        <p>Henüz bir şey eklemedin.</p>
+        <a routerLink="/" class="btn-primary">Kafeleri Keşfet</a>
+    </div>
+    } @else {
+    <div class="cart-layout">
+        <div class="cart-items">
+            @for (item of cartService.items(); track item.product.id) {
+            <div class="cart-item">
+                <img [src]="item.product.image" [alt]="item.product.name" class="item-image" />
+                <div class="item-details">
+                    <h3 class="item-name">{{ item.product.name }}</h3>
+                    <span class="item-category">{{ item.product.category }}</span>
+                    <div class="item-price-row">
+                        @if (item.discount > 0) {
+                        <span class="item-price-old">{{ item.product.price | currency:'TRY':'₺':'1.0-0' }}</span>
+                        <span class="item-price-discount">{{ getDiscountedPrice(item) | currency:'TRY':'₺':'1.0-0'
+                            }}</span>
+                        <span class="item-campaign-badge">{{ item.campaignTitle }}</span>
+                        } @else {
+                        <span class="item-price">{{ item.product.price | currency:'TRY':'₺':'1.0-0' }}</span>
+                        }
+                    </div>
+                </div>
+                <div class="item-controls">
+                    <button class="qty-btn" (click)="decreaseQty(item)">−</button>
+                    <span class="qty-value">{{ item.quantity }}</span>
+                    <button class="qty-btn" (click)="increaseQty(item)">+</button>
+                </div>
+                <span class="item-total">{{ getItemTotal(item) | currency:'TRY':'₺':'1.0-0' }}</span>
+                <button class="remove-btn" (click)="removeItem(item)">✕</button>
+            </div>
+            <!-- Note input -->
+            <div class="item-note-row">
+                <input type="text" class="note-input" [value]="item.note"
+                    (input)="updateNote(item, $any($event.target).value)"
+                    placeholder="📝 Not ekle (örn: laktozsuz süt, az şekerli...)" />
+            </div>
+            }
+        </div>
+
+        <div class="order-summary">
+            <h2 class="summary-title">Sipariş Özeti</h2>
+            <div class="summary-row">
+                <span>Ürünler</span>
+                <span>{{ cartService.totalItems() }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Ara Toplam</span>
+                <span>{{ cartService.subtotalPrice() | currency:'TRY':'₺':'1.0-0' }}</span>
+            </div>
+            @if (cartService.discountAmount() > 0) {
+            <div class="summary-row discount-row">
+                <span>🎉 Kampanya İndirimi</span>
+                <span>−{{ cartService.discountAmount() | currency:'TRY':'₺':'1.0-0' }}</span>
+            </div>
+            }
+            <div class="summary-row">
+                <span>Hizmet Bedeli</span>
+                <span>₺0</span>
+            </div>
+            <hr class="summary-divider" />
+            <div class="summary-row total">
+                <span>Toplam</span>
+                <span>{{ cartService.totalPrice() | currency:'TRY':'₺':'1.0-0' }}</span>
+            </div>
+
+            @if (orderError()) {
+            <div class="error-msg">{{ orderError() }}</div>
+            }
+
+            @if (!authService.isLoggedIn()) {
+            <a routerLink="/login" class="checkout-btn">Giriş Yap & Sipariş Ver</a>
+            } @else {
+            <button class="checkout-btn" (click)="placeOrder()" [disabled]="loading()">
+                {{ loading() ? 'Sipariş veriliyor...' : 'Sipariş Ver' }}
+            </button>
+            }
+            <p class="checkout-note">* Demo — gerçek ödeme yapılmaz.</p>
+        </div>
+    </div>
+    }
+</div>
