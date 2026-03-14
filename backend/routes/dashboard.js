@@ -145,17 +145,24 @@ router.get('/notifications', authMiddleware, requireRole('cafeOwner'), (req, res
 });
 
 // GET /api/dashboard/analytics — Today's sales analytics
+// FIX: Artık 'delivered' siparişler de sayılıyor. Sadece 'cancelled' hariç tutulur.
 router.get('/analytics', authMiddleware, requireRole('cafeOwner'), (req, res) => {
     try {
         const cafeId = req.user.cafeId;
         const today = new Date().toISOString().split('T')[0];
 
+        // Teslim edilmiş siparişleri de say (önceki versiyon sadece 'preparing' ve 'ready' sayıyordu)
         const summary = db.prepare(
-            `SELECT COUNT(*) AS orderCount, COALESCE(SUM(total_amount), 0) AS totalRevenue
+            `SELECT
+               COUNT(*) AS orderCount,
+               COALESCE(SUM(total_amount), 0) AS totalRevenue
              FROM orders
-             WHERE cafe_id = ? AND DATE(created_at) = ? AND status != 'cancelled'`
+             WHERE cafe_id = ?
+               AND DATE(created_at) = ?
+               AND status = 'delivered'`
         ).get(cafeId, today);
 
+        // Durum bazlı dağılım
         const byStatus = db.prepare(
             `SELECT status, COUNT(*) AS count
              FROM orders
@@ -163,12 +170,16 @@ router.get('/analytics', authMiddleware, requireRole('cafeOwner'), (req, res) =>
              GROUP BY status`
         ).all(cafeId, today);
 
+        // En çok satan ürünler — sadece teslim edilmiş siparişlerin aktif item'ları
         const topProducts = db.prepare(
             `SELECT p.name, SUM(oi.quantity) AS totalQty, SUM(oi.line_total) AS totalSales
              FROM order_items oi
              JOIN products p ON p.id = oi.product_id
              JOIN orders o ON o.id = oi.order_id
-             WHERE o.cafe_id = ? AND DATE(o.created_at) = ? AND o.status != 'cancelled' AND oi.status = 'active'
+             WHERE o.cafe_id = ?
+               AND DATE(o.created_at) = ?
+               AND o.status = 'delivered'
+               AND oi.status = 'active'
              GROUP BY p.id
              ORDER BY totalQty DESC
              LIMIT 5`

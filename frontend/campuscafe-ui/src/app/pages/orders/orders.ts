@@ -33,6 +33,7 @@ export class Orders implements OnInit {
         switch (status) {
             case 'preparing': return '⏳ Hazırlanıyor';
             case 'ready': return '✅ Siparişin Hazır';
+            case 'delivered': return '📦 Teslim Edildi';  // FIX: eksik status eklendi
             case 'cancelled': return '❌ İptal Edildi';
             default: return status;
         }

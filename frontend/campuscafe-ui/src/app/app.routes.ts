@@ -11,5 +11,7 @@ export const routes: Routes = [
     { path: 'orders', loadComponent: () => import('./pages/orders/orders').then(m => m.Orders) },
     { path: 'rewards', loadComponent: () => import('./pages/rewards/rewards').then(m => m.Rewards) },
     { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard) },
+    // YENİ: Menü ve kampanya yönetimi (sadece cafeOwner kullanacak)
+    { path: 'menu-management', loadComponent: () => import('./pages/menu-management/menu-management').then(m => m.MenuManagement) },
     { path: '**', redirectTo: '' }
 ];

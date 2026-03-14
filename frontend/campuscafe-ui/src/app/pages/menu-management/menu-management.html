@@ -1,0 +1,227 @@
+<div class="menu-mgmt-page">
+    <div class="page-header">
+        <h1 class="page-title">🍽️ Menü & Kampanya Yönetimi</h1>
+        <p class="page-subtitle">Ürünlerinizi ve kampanyalarınızı buradan yönetin</p>
+    </div>
+
+    <!-- Mesaj -->
+    @if (message(); as msg) {
+    <div class="toast" [class.toast-success]="msg.type === 'success'" [class.toast-error]="msg.type === 'error'">
+        {{ msg.text }}
+    </div>
+    }
+
+    <!-- Sekmeler -->
+    <div class="tabs">
+        <button class="tab-btn" [class.active]="activeTab() === 'products'" (click)="setTab('products')">
+            🛍️ Ürünler <span class="tab-count">{{ products().length }}</span>
+        </button>
+        <button class="tab-btn" [class.active]="activeTab() === 'campaigns'" (click)="setTab('campaigns')">
+            🎯 Kampanyalar <span class="tab-count">{{ campaigns().length }}</span>
+        </button>
+    </div>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <p>Yükleniyor...</p>
+    </div>
+    } @else {
+
+    <!-- ── ÜRÜNLER SEKMESİ ── -->
+    @if (activeTab() === 'products') {
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">Ürün Listesi</h2>
+            <button class="add-btn" (click)="openAddProduct()">+ Yeni Ürün</button>
+        </div>
+
+        <!-- Ürün Ekleme / Düzenleme Formu -->
+        @if (showProductForm()) {
+        <div class="form-card">
+            <h3 class="form-title">{{ editingProduct() ? '✏️ Ürün Düzenle' : '➕ Yeni Ürün Ekle' }}</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Ürün Adı *</label>
+                    <input type="text" [(ngModel)]="productForm.name" placeholder="ör. Cappuccino" />
+                </div>
+                <div class="form-group">
+                    <label>Kategori *</label>
+                    <select [(ngModel)]="productForm.category">
+                        @for (cat of categories; track cat) {
+                        <option [value]="cat">{{ getCategoryLabel(cat) }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fiyat (₺) *</label>
+                    <input type="number" [(ngModel)]="productForm.price" min="0" step="0.5" />
+                </div>
+                <div class="form-group">
+                    <label>Görsel URL</label>
+                    <input type="text" [(ngModel)]="productForm.image" placeholder="https://..." />
+                </div>
+                <div class="form-group full-width">
+                    <label>Açıklama</label>
+                    <textarea [(ngModel)]="productForm.description" rows="2"
+                        placeholder="Kısa ürün açıklaması"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="save-btn" (click)="saveProduct()" [disabled]="saving()">
+                    {{ saving() ? 'Kaydediliyor...' : (editingProduct() ? 'Güncelle' : 'Ekle') }}
+                </button>
+                <button class="cancel-form-btn" (click)="closeProductForm()">İptal</button>
+            </div>
+        </div>
+        }
+
+        <!-- Ürün Listesi -->
+        @if (products().length === 0) {
+        <div class="empty-state">
+            <p>Henüz ürün eklenmemiş.</p>
+        </div>
+        } @else {
+        <div class="product-table">
+            <div class="table-header">
+                <span>Ürün</span>
+                <span>Kategori</span>
+                <span>Fiyat</span>
+                <span>Durum</span>
+                <span>İşlemler</span>
+            </div>
+            @for (product of products(); track product.id) {
+            <div class="table-row" [class.row-inactive]="!product.isAvailable">
+                <div class="product-name-cell">
+                    @if (product.image) {
+                    <img [src]="product.image" [alt]="product.name" class="product-thumb" />
+                    }
+                    <span>{{ product.name }}</span>
+                </div>
+                <span class="category-badge">{{ getCategoryLabel(product.category) }}</span>
+                <span class="price-cell">{{ product.price | currency:'TRY':'₺':'1.0-0' }}</span>
+                <div class="availability-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" [checked]="product.isAvailable"
+                            (change)="toggleProductAvailability(product)" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="availability-label">{{ product.isAvailable ? 'Aktif' : 'Pasif' }}</span>
+                </div>
+                <div class="row-actions">
+                    <button class="edit-btn" (click)="openEditProduct(product)" title="Düzenle">✏️</button>
+                    <button class="delete-btn" (click)="deleteProduct(product)" title="Sil">🗑️</button>
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+    }
+
+    <!-- ── KAMPANYALAR SEKMESİ ── -->
+    @if (activeTab() === 'campaigns') {
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">Kampanyalar</h2>
+            <button class="add-btn" (click)="openAddCampaign()">+ Yeni Kampanya</button>
+        </div>
+
+        <!-- Kampanya Ekleme / Düzenleme Formu -->
+        @if (showCampaignForm()) {
+        <div class="form-card">
+            <h3 class="form-title">{{ editingCampaign() ? '✏️ Kampanya Düzenle' : '➕ Yeni Kampanya' }}</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Başlık *</label>
+                    <input type="text" [(ngModel)]="campaignForm.title" placeholder="ör. Öğrenci İndirimi ☕" />
+                </div>
+                <div class="form-group">
+                    <label>İndirim / Rozet Değeri</label>
+                    <input type="text" [(ngModel)]="campaignForm.discount" placeholder="ör. %20 veya 2 Al 1 Öde" />
+                </div>
+                <div class="form-group">
+                    <label>Rozet Etiketi</label>
+                    <input type="text" [(ngModel)]="campaignForm.badge" placeholder="ör. Öğrencilere Özel" />
+                </div>
+                <div class="form-group">
+                    <label>Hedef Kitle</label>
+                    <select [(ngModel)]="campaignForm.targetRole">
+                        @for (r of targetRoles; track r.value) {
+                        <option [value]="r.value">{{ r.label }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Son Geçerlilik Tarihi</label>
+                    <input type="date" [(ngModel)]="campaignForm.validUntil" />
+                </div>
+                <div class="form-group">
+                    <label>Görsel URL</label>
+                    <input type="text" [(ngModel)]="campaignForm.image" placeholder="https://..." />
+                </div>
+                <div class="form-group full-width">
+                    <label>Açıklama</label>
+                    <textarea [(ngModel)]="campaignForm.description" rows="2"
+                        placeholder="Kampanya detayları"></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>İlgili Ürün ID'leri (virgülle ayır)</label>
+                    <input type="text" [(ngModel)]="campaignForm.relatedProductIds" placeholder="ör. 101,102,103" />
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="save-btn" (click)="saveCampaign()" [disabled]="saving()">
+                    {{ saving() ? 'Kaydediliyor...' : (editingCampaign() ? 'Güncelle' : 'Oluştur') }}
+                </button>
+                <button class="cancel-form-btn" (click)="closeCampaignForm()">İptal</button>
+            </div>
+        </div>
+        }
+
+        <!-- Kampanya Listesi -->
+        @if (campaigns().length === 0) {
+        <div class="empty-state">
+            <p>Henüz kampanya oluşturulmamış.</p>
+        </div>
+        } @else {
+        <div class="campaign-list">
+            @for (campaign of campaigns(); track campaign.id) {
+            <div class="campaign-row" [class.campaign-inactive]="!campaign.isActive">
+                <div class="campaign-info">
+                    <div class="campaign-top">
+                        <span class="campaign-title">{{ campaign.title }}</span>
+                        @if (campaign.badge) {
+                        <span class="campaign-badge-tag">{{ campaign.badge }}</span>
+                        }
+                        @if (campaign.discount) {
+                        <span class="discount-tag">{{ campaign.discount }}</span>
+                        }
+                    </div>
+                    @if (campaign.description) {
+                    <p class="campaign-desc">{{ campaign.description }}</p>
+                    }
+                    <div class="campaign-meta">
+                        <span>👥 {{ getTargetLabel(campaign.targetRole) }}</span>
+                        @if (campaign.validUntil) {
+                        <span>📅 {{ campaign.validUntil }} tarihine kadar</span>
+                        }
+                    </div>
+                </div>
+                <div class="campaign-actions">
+                    <label class="toggle-switch">
+                        <input type="checkbox" [checked]="campaign.isActive" (change)="toggleCampaign(campaign)" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="availability-label">{{ campaign.isActive ? 'Yayında' : 'Durduruldu' }}</span>
+                    <button class="edit-btn" (click)="openEditCampaign(campaign)" title="Düzenle">✏️</button>
+                    <button class="delete-btn" (click)="deleteCampaign(campaign)" title="Sil">🗑️</button>
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+    }
+
+    }
+</div>
