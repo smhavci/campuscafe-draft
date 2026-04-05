@@ -1,0 +1,225 @@
+.profile-page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 6rem 1.5rem 4rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.4rem;
+}
+
+.page-subtitle {
+    color: rgba(255,255,255,0.4);
+    margin: 0;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 4rem;
+    color: rgba(255,255,255,0.4);
+}
+
+/* Toast mesaj */
+.toast {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    z-index: 9999;
+    animation: slideIn 0.2s ease;
+}
+.toast-success { background: #2d6a4f; color: #d8f3dc; }
+.toast-error   { background: #7b2d2d; color: #ffd5d5; }
+
+@keyframes slideIn {
+    from { transform: translateX(2rem); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+
+/* Kullanıcı özet kartı */
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+
+/* İsmin baş harfleriyle oluşan avatar */
+.avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c8a97e, #8b6f4e);
+    color: #1a1410;
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.4rem;
+}
+
+.role-badge {
+    display: inline-block;
+    background: rgba(200,169,126,0.15);
+    color: #c8a97e;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+}
+
+.profile-detail {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    margin: 0.2rem 0 0;
+}
+
+.profile-detail.muted {
+    color: rgba(255,255,255,0.3);
+    font-size: 0.78rem;
+}
+
+/* Sekmeler */
+.sections {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.section-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.45);
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.section-btn.active {
+    background: rgba(200,169,126,0.12);
+    border-color: rgba(200,169,126,0.3);
+    color: #c8a97e;
+}
+
+.section-btn:hover:not(.active) {
+    border-color: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+}
+
+/* Form kartı */
+.form-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.form-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 1.25rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-grid.single-col {
+    grid-template-columns: 1fr;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.form-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-group input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #c8a97e;
+}
+
+/* Değiştirilemez input'lar soluk göründü */
+.input-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.save-btn {
+    background: #c8a97e;
+    color: #1a1410;
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1.75rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.save-btn:hover:not(:disabled) { background: #b8956a; }
+.save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 500px) {
+    .profile-card { flex-direction: column; text-align: center; }
+    .form-grid { grid-template-columns: 1fr; }
+    .sections { flex-direction: column; }
+}

@@ -18,6 +18,7 @@ const orderRoutes = require('./routes/orders');
 const loyaltyRoutes = require('./routes/loyalty');
 const dashboardRoutes = require('./routes/dashboard');
 const menuRoutes = require('./routes/menu'); // YENİ: Menü yönetimi
+const aiRoutes = require('./routes/ai'); // YENİ: AI Entegrasyonu
 
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -28,6 +29,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/menu', menuRoutes); // YENİ
+app.use('/api/ai', aiRoutes); // YENİ
 
 // ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {

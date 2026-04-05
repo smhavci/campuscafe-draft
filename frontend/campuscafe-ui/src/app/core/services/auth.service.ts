@@ -15,6 +15,8 @@ export interface User {
     email?: string;
     role: UserRole;
     cafeId?: number;
+    cafeName?: string;
+    createdAt?: string;
 }
 
 export interface AuthResponse {
@@ -29,14 +31,15 @@ export class AuthService {
     currentUser = signal<User | null>(null);
     token = signal<string | null>(null);
     isLoggedIn = computed(() => !!this.token());
-    isStudent = computed(() => this.currentUser()?.role === 'student');
-    isTeacher = computed(() => this.currentUser()?.role === 'teacher');
-    isOwner = computed(() => this.currentUser()?.role === 'cafeOwner');
-    userRole = computed(() => this.currentUser()?.role || 'student');
+    isStudent  = computed(() => this.currentUser()?.role === 'student');
+    isTeacher  = computed(() => this.currentUser()?.role === 'teacher');
+    isOwner    = computed(() => this.currentUser()?.role === 'cafeOwner');
+    userRole   = computed(() => this.currentUser()?.role || 'student');
 
     constructor(private http: HttpClient, private router: Router) {
+        // Sayfa yenilenince localStorage'dan token ve kullanıcıyı geri yükle
         const savedToken = localStorage.getItem('token');
-        const savedUser = localStorage.getItem('user');
+        const savedUser  = localStorage.getItem('user');
         if (savedToken && savedUser) {
             this.token.set(savedToken);
             this.currentUser.set(JSON.parse(savedUser));
@@ -61,6 +64,40 @@ export class AuthService {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         this.router.navigate(['/']);
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // getProfile() — Backend'den güncel profil bilgisini çeker.
+    //
+    // Neden token'daki bilgileri kullanmıyoruz?
+    // Token'lar oluşturulduklarında sabitlenir. Kullanıcı adını
+    // değiştirirse token eski adı taşımaya devam eder.
+    // Bu yüzden her seferinde DB'den taze veri alırız.
+    // ─────────────────────────────────────────────────────────
+    getProfile(): Observable<User> {
+        return this.http.get<User>(`${this.apiUrl}/me`, {
+            headers: this.getAuthHeaders()
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // updateProfile() — Ad/soyad veya şifre günceller.
+    //
+    // tap() operatörü: Observable'ı değiştirmeden "yan etki"
+    // yapar. Cevap gelince currentUser signal'ını ve
+    // localStorage'ı günceller — böylece navbar'daki isim
+    // otomatik değişir.
+    // ─────────────────────────────────────────────────────────
+    updateProfile(data: { firstName?: string; lastName?: string; currentPassword?: string; newPassword?: string }): Observable<{ message: string; user: User }> {
+        return this.http.patch<{ message: string; user: User }>(`${this.apiUrl}/me`, data, {
+            headers: this.getAuthHeaders()
+        }).pipe(
+            tap(res => {
+                // Güncel kullanıcıyı signal'a ve localStorage'a yaz
+                this.currentUser.set(res.user);
+                localStorage.setItem('user', JSON.stringify(res.user));
+            })
+        );
     }
 
     getAuthHeaders(): { [key: string]: string } {

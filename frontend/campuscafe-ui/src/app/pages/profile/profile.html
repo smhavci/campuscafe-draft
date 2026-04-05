@@ -1,0 +1,123 @@
+<div class="profile-page">
+  <div class="page-header">
+    <h1 class="page-title">👤 Profilim</h1>
+    <p class="page-subtitle">Hesap bilgilerini görüntüle ve güncelle</p>
+  </div>
+
+  <!-- Mesaj (başarı veya hata) -->
+  @if (message(); as msg) {
+  <div class="toast" [class.toast-success]="msg.type === 'success'" [class.toast-error]="msg.type === 'error'">
+    {{ msg.text }}
+  </div>
+  }
+
+  @if (loading()) {
+  <div class="loading-state"><p>Yükleniyor...</p></div>
+  } @else if (user(); as u) {
+
+  <!-- Kullanıcı özet kartı -->
+  <div class="profile-card">
+    <div class="avatar">
+      <!-- Baş harfler ile avatar -->
+      {{ u.firstName[0] }}{{ u.lastName[0] }}
+    </div>
+    <div class="profile-info">
+      <h2 class="profile-name">{{ u.firstName }} {{ u.lastName }}</h2>
+      <span class="role-badge">{{ getRoleLabel(u.role) }}</span>
+      @if (u.role === 'student' && u.studentNumber) {
+      <p class="profile-detail">🎓 No: {{ u.studentNumber }}</p>
+      }
+      @if (u.email) {
+      <p class="profile-detail">✉️ {{ u.email }}</p>
+      }
+      @if (u.role === 'cafeOwner' && u.cafeName) {
+      <p class="profile-detail">☕ {{ u.cafeName }}</p>
+      }
+      @if (u.createdAt) {
+      <p class="profile-detail muted">📅 Kayıt: {{ formatDate(u.createdAt) }}</p>
+      }
+    </div>
+  </div>
+
+  <!-- Sekmeler -->
+  <div class="sections">
+    <button class="section-btn" [class.active]="activeSection() === 'info'"
+            (click)="activeSection.set('info')">
+      ✏️ Bilgileri Düzenle
+    </button>
+    <button class="section-btn" [class.active]="activeSection() === 'password'"
+            (click)="activeSection.set('password')">
+      🔒 Şifre Değiştir
+    </button>
+  </div>
+
+  <!-- Bilgi güncelleme formu -->
+  @if (activeSection() === 'info') {
+  <div class="form-card">
+    <h3 class="form-title">Kişisel Bilgiler</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Ad</label>
+        <!-- [(ngModel)] çift yönlü bağlama:
+             input değişince infoForm.firstName güncellenir,
+             infoForm.firstName değişince input güncellenir -->
+        <input type="text" [(ngModel)]="infoForm.firstName" placeholder="Adınız" />
+      </div>
+      <div class="form-group">
+        <label>Soyad</label>
+        <input type="text" [(ngModel)]="infoForm.lastName" placeholder="Soyadınız" />
+      </div>
+      @if (u.role === 'student') {
+      <div class="form-group">
+        <label>Öğrenci No</label>
+        <!-- Öğrenci numarası değiştirilemez, sadece göster -->
+        <input type="text" [value]="u.studentNumber" disabled class="input-disabled" />
+      </div>
+      }
+      @if (u.email) {
+      <div class="form-group">
+        <label>E-posta</label>
+        <!-- E-posta da değiştirilemez -->
+        <input type="text" [value]="u.email" disabled class="input-disabled" />
+      </div>
+      }
+    </div>
+    <div class="form-actions">
+      <button class="save-btn" (click)="saveInfo()" [disabled]="saving()">
+        {{ saving() ? 'Kaydediliyor...' : 'Kaydet' }}
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- Şifre değiştirme formu -->
+  @if (activeSection() === 'password') {
+  <div class="form-card">
+    <h3 class="form-title">Şifre Değiştir</h3>
+    <div class="form-grid single-col">
+      <div class="form-group">
+        <label>Mevcut Şifre</label>
+        <input type="password" [(ngModel)]="passwordForm.currentPassword"
+               placeholder="Mevcut şifreniz" />
+      </div>
+      <div class="form-group">
+        <label>Yeni Şifre</label>
+        <input type="password" [(ngModel)]="passwordForm.newPassword"
+               placeholder="En az 6 karakter" />
+      </div>
+      <div class="form-group">
+        <label>Yeni Şifre Tekrar</label>
+        <input type="password" [(ngModel)]="passwordForm.confirmPassword"
+               placeholder="Yeni şifrenizi tekrar girin" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="save-btn" (click)="savePassword()" [disabled]="saving()">
+        {{ saving() ? 'Değiştiriliyor...' : 'Şifreyi Değiştir' }}
+      </button>
+    </div>
+  </div>
+  }
+
+  }
+</div>

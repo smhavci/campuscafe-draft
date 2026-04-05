@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
+const authMiddleware = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'campuscafe-secret-key-2026';
 
@@ -48,12 +49,10 @@ router.post('/register', async (req, res) => {
             if (!cafeId) {
                 return res.status(400).json({ message: 'Kafe seçimi zorunludur' });
             }
-            // Check cafe exists
             const cafe = db.prepare('SELECT id FROM cafes WHERE id = ?').get(cafeId);
             if (!cafe) {
                 return res.status(400).json({ message: 'Geçersiz kafe seçimi' });
             }
-            // Check no other owner for this cafe
             const existingOwner = db.prepare(
                 "SELECT id FROM users WHERE cafe_id = ? AND role = 'cafeOwner'"
             ).get(cafeId);
@@ -62,7 +61,6 @@ router.post('/register', async (req, res) => {
             }
         }
 
-        // Check email uniqueness (for all roles if email provided)
         if (email) {
             const existingEmail = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
             if (existingEmail) {
@@ -70,11 +68,9 @@ router.post('/register', async (req, res) => {
             }
         }
 
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Insert user
         const result = db.prepare(
             'INSERT INTO users (first_name, last_name, student_number, email, password_hash, role, cafe_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
         ).run(
@@ -131,7 +127,6 @@ router.post('/login', async (req, res) => {
                  FROM users WHERE student_number = ? AND role = 'student'`
             ).get(studentNumber);
         } else {
-            // teacher or cafeOwner — login via email
             if (!email) {
                 return res.status(400).json({ message: 'E-posta zorunludur' });
             }
@@ -159,6 +154,127 @@ router.post('/login', async (req, res) => {
 
         delete user.password_hash;
         res.json({ user, token });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/auth/me — Giriş yapmış kullanıcının profilini getir
+//
+// authMiddleware bu route'u korur:
+//   → Token yoksa 401 döner, buraya giremez
+//   → Token varsa req.user içine { id, role, cafeId } yazar
+//
+// Sonra o id ile veritabanından güncel bilgileri çekeriz.
+// Token'daki bilgilere güvenmiyoruz çünkü kullanıcı bilgileri
+// değişmiş olabilir — her seferinde DB'den taze veri alırız.
+// ─────────────────────────────────────────────────────────────
+router.get('/me', authMiddleware, (req, res) => {
+    try {
+        // req.user.id → authMiddleware tarafından token'dan çözülen kullanıcı ID'si
+        const user = db.prepare(
+            `SELECT id, first_name AS firstName, last_name AS lastName,
+                    student_number AS studentNumber, email, role, cafe_id AS cafeId,
+                    created_at AS createdAt
+             FROM users
+             WHERE id = ?`
+        ).get(req.user.id);
+
+        // Kullanıcı silinmişse (çok nadir ama olabilir)
+        if (!user) {
+            return res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+        }
+
+        // Kafe sahibiyse kafe adını da ekle — frontend'de göstermek için
+        if (user.role === 'cafeOwner' && user.cafeId) {
+            const cafe = db.prepare('SELECT name FROM cafes WHERE id = ?').get(user.cafeId);
+            user.cafeName = cafe ? cafe.name : null;
+        }
+
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────
+// PATCH /api/auth/me — Profil bilgilerini güncelle
+//
+// PATCH = kısmi güncelleme (PUT tüm nesneyi değiştirirdi)
+// Kullanıcı sadece gönderdiklerini günceller:
+//   - Ad/soyad değiştirme
+//   - Şifre değiştirme (eski şifre doğrulaması ile)
+// ─────────────────────────────────────────────────────────────
+router.patch('/me', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { firstName, lastName, currentPassword, newPassword } = req.body;
+
+        // Güncellenecek alanları ve parametrelerini dinamik olarak oluşturuyoruz.
+        // Böylece kullanıcı sadece adını değiştirmek isterse şifre alanına
+        // dokunmadan güncelleme yapabilir.
+        const updates = [];  // "first_name = ?" gibi SQL parçaları
+        const params = [];   // ? yerine geçecek değerler
+
+        if (firstName !== undefined) {
+            if (!firstName.trim()) return res.status(400).json({ message: 'Ad boş olamaz' });
+            updates.push('first_name = ?');
+            params.push(firstName.trim());
+        }
+
+        if (lastName !== undefined) {
+            if (!lastName.trim()) return res.status(400).json({ message: 'Soyad boş olamaz' });
+            updates.push('last_name = ?');
+            params.push(lastName.trim());
+        }
+
+        // Şifre değiştirme isteği varsa
+        if (newPassword !== undefined) {
+            if (!currentPassword) {
+                return res.status(400).json({ message: 'Mevcut şifrenizi girin' });
+            }
+            if (newPassword.length < 6) {
+                return res.status(400).json({ message: 'Yeni şifre en az 6 karakter olmalıdır' });
+            }
+
+            // Mevcut şifreyi veritabanından çekip karşılaştır
+            const userWithHash = db.prepare(
+                'SELECT password_hash FROM users WHERE id = ?'
+            ).get(userId);
+
+            const isMatch = await bcrypt.compare(currentPassword, userWithHash.password_hash);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Mevcut şifre hatalı' });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const newHash = await bcrypt.hash(newPassword, salt);
+            updates.push('password_hash = ?');
+            params.push(newHash);
+        }
+
+        // Hiç güncelleme yoksa devam etmeye gerek yok
+        if (updates.length === 0) {
+            return res.status(400).json({ message: 'Güncellenecek alan bulunamadı' });
+        }
+
+        // WHERE id = ? için userId'yi en sona ekliyoruz
+        params.push(userId);
+
+        // Dinamik SQL: "UPDATE users SET first_name = ?, last_name = ? WHERE id = ?"
+        db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+
+        // Güncellenmiş kullanıcıyı döndür (şifre hash'i olmadan)
+        const updated = db.prepare(
+            `SELECT id, first_name AS firstName, last_name AS lastName,
+                    student_number AS studentNumber, email, role, cafe_id AS cafeId
+             FROM users WHERE id = ?`
+        ).get(userId);
+
+        res.json({ message: 'Profil güncellendi', user: updated });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Sunucu hatası' });

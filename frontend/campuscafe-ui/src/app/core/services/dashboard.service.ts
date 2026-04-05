@@ -9,6 +9,7 @@ export interface DashboardOrder {
     status: string;
     totalAmount: number;
     createdAt: string;
+    updatedAt?: string;
     customerName: string;
     customerRole: string;
     items: DashboardOrderItem[];
@@ -34,6 +35,16 @@ export interface Analytics {
     topProducts: { name: string; totalQty: number; totalSales: number }[];
 }
 
+export interface HistoryResponse {
+    orders: DashboardOrder[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
     private apiUrl = `${API_BASE_URL}/dashboard`;
@@ -46,6 +57,16 @@ export class DashboardService {
 
     getActiveOrders(): Observable<DashboardOrder[]> {
         return this.http.get<DashboardOrder[]>(`${this.apiUrl}/orders`, { headers: this.getHeaders() });
+    }
+
+    getHistory(params: { status?: string; date?: string; page?: number; limit?: number } = {}): Observable<HistoryResponse> {
+        const query = new URLSearchParams();
+        if (params.status) query.set('status', params.status);
+        if (params.date)   query.set('date', params.date);
+        if (params.page)   query.set('page', String(params.page));
+        if (params.limit)  query.set('limit', String(params.limit));
+        const qs = query.toString() ? `?${query.toString()}` : '';
+        return this.http.get<HistoryResponse>(`${this.apiUrl}/history${qs}`, { headers: this.getHeaders() });
     }
 
     updateOrderStatus(orderId: number, status: string): Observable<any> {

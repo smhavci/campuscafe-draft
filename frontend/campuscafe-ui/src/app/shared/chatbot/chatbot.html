@@ -1,0 +1,43 @@
+<div class="chatbot-container" [class.open]="isOpen()">
+    <!-- Otomatik Mesaj (Hover) -->
+    <div class="hover-tip" *ngIf="isHovered() && !isOpen()">
+        {{ hoverMessage }}
+    </div>
+
+    <!-- Chat Balonu (Kapalıyken) -->
+    <button 
+        class="chat-trigger" 
+        (click)="toggleChat()"
+        (mouseenter)="isHovered.set(true)"
+        (mouseleave)="isHovered.set(false)">
+        <span class="icon">🤖</span>
+    </button>
+
+    <!-- Chat Penceresi (Açıkken) -->
+    <div class="chat-window" *ngIf="isOpen()">
+        <div class="chat-header">
+            <h3>Campus AI Asistan</h3>
+            <button (click)="toggleChat()" class="close-btn">×</button>
+        </div>
+
+        <div class="chat-body" #scrollMe [scrollTop]="scrollMe.scrollHeight">
+            <div *ngFor="let msg of messages()" class="message" [class.user]="msg.role === 'user'" [class.ai]="msg.role === 'ai'">
+                <div class="bubble" [innerHTML]="msg.html ?? msg.text"></div>
+            </div>
+            <div *ngIf="isLoading()" class="message ai loading">
+                <div class="bubble">Düşünüyorum... 🧠</div>
+            </div>
+        </div>
+
+        <div class="chat-footer">
+            <input 
+                type="text" 
+                [(ngModel)]="userInput" 
+                (keyup.enter)="sendMessage()" 
+                placeholder="Mesajınızı yazın..."
+                [disabled]="isLoading()"
+            />
+            <button (click)="sendMessage()" [disabled]="isLoading() || !userInput.trim()">Gönder</button>
+        </div>
+    </div>
+</div>

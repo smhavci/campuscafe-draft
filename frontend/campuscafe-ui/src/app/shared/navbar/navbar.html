@@ -12,7 +12,6 @@
       <span class="nav-dot"></span>
       }
     </a>
-    <!-- YENİ: Menü yönetimi linki — sadece kafe sahiplerine görünür -->
     <a routerLink="/menu-management" routerLinkActive="active" class="menu-mgmt-link">
       🍽️ Menü & Kampanya
     </a>
@@ -30,12 +29,15 @@
       <span class="nav-dot"></span>
       }
     </a>
-    <span class="user-name">
+
+    <!-- Kullanıcı adına tıklayınca profile git -->
+    <a routerLink="/profile" routerLinkActive="active" class="user-name">
       @if (authService.isOwner()) { ☕ }
       @else if (authService.isTeacher()) { 👨‍🏫 }
       @else { 👋 }
       {{ authService.currentUser()?.firstName }}
-    </span>
+    </a>
+
     <button class="logout-btn" (click)="logout()">Çıkış</button>
     } @else {
     <a routerLink="/login" routerLinkActive="active" class="login-link">Giriş Yap</a>

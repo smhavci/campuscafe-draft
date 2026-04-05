@@ -323,3 +323,103 @@
         text-align: center;
     }
 }
+
+/* ── Çakışma Modal'ı ──────────────────────────────────── */
+
+/* Yarı saydam siyah arka plan — tüm ekranı kaplar */
+.conflict-overlay {
+    position: fixed;
+    inset: 0;                          /* top/right/bottom/left: 0 */
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+/* Modal kutusu */
+.conflict-modal {
+    background: #1e1812;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    animation: slideUp 0.25s ease;
+}
+
+.conflict-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.conflict-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.75rem;
+}
+
+.conflict-desc {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.6;
+    margin: 0 0 1.5rem;
+}
+
+.conflict-desc strong {
+    color: #c8a97e;
+}
+
+.conflict-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.conflict-confirm-btn {
+    background: #c8a97e;
+    color: #1a1410;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.conflict-confirm-btn:hover {
+    background: #b8956a;
+}
+
+.conflict-cancel-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.conflict-cancel-btn:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(1.5rem); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}

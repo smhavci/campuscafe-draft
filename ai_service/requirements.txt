@@ -1,0 +1,5 @@
+crewai[tools]
+python-dotenv
+requests
+fastapi
+uvicorn

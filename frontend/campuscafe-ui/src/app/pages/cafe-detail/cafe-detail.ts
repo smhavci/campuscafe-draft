@@ -22,14 +22,16 @@ export class CafeDetail implements OnInit {
     activeCategory = signal<string>('all');
     campaigns = signal<CafeCampaign[]>([]);
     activeCampaign = signal<CafeCampaign | null>(null);
-    // All campaigns visible to the current user (filtered by role)
     visibleCampaigns = signal<CafeCampaign[]>([]);
+
+    showConflictModal = signal(false);
+    pendingProduct = signal<{ product: Product; discount: number; campaignTitle: string } | null>(null);
 
     constructor(
         private route: ActivatedRoute,
         private cafeService: CafeService,
         private categoryService: CategoryService,
-        private cartService: CartService,
+        public cartService: CartService, // FIX: private → public (HTML'de kullanılıyor)
         private authService: AuthService
     ) { }
 
@@ -56,7 +58,6 @@ export class CafeDetail implements OnInit {
 
         this.cafeService.getCafeCampaigns(slug).subscribe(campaigns => {
             this.campaigns.set(campaigns);
-            // Filter campaigns by user role
             const userRole = this.authService.userRole();
             this.visibleCampaigns.set(
                 campaigns.filter(c => c.targetRole === 'all' || c.targetRole === userRole)
@@ -77,7 +78,6 @@ export class CafeDetail implements OnInit {
     selectCampaign(campaign: CafeCampaign): void {
         this.activeCampaign.set(campaign);
         this.activeCategory.set('');
-
         if (campaign.relatedProductIds) {
             const ids = campaign.relatedProductIds.split(',').map(id => parseInt(id.trim()));
             this.filteredProducts.set(this.products().filter(p => ids.includes(p.id)));
@@ -92,27 +92,48 @@ export class CafeDetail implements OnInit {
     }
 
     onAddToCart(product: Product): void {
-        // Auto-find the best matching campaign for this product based on user role
-        const userRole = this.authService.userRole();
-        const campaigns = this.campaigns();
+        const { discount, campaignTitle } = this.getBestCampaign(product);
+        const cafeName = this.cafe()?.name || '';
 
+        const result = this.cartService.addToCart(product, discount, campaignTitle, cafeName);
+
+        if (result === 'conflict') {
+            this.pendingProduct.set({ product, discount, campaignTitle });
+            this.showConflictModal.set(true);
+        }
+    }
+
+    confirmClearAndAdd(): void {
+        const pending = this.pendingProduct();
+        if (!pending) return;
+
+        const cafeName = this.cafe()?.name || '';
+        this.cartService.clearCart();
+        this.cartService.addToCart(pending.product, pending.discount, pending.campaignTitle, cafeName);
+
+        this.showConflictModal.set(false);
+        this.pendingProduct.set(null);
+    }
+
+    cancelConflict(): void {
+        this.showConflictModal.set(false);
+        this.pendingProduct.set(null);
+    }
+
+    private getBestCampaign(product: Product): { discount: number; campaignTitle: string } {
+        const userRole = this.authService.userRole();
         let bestDiscount = 0;
         let bestCampaignTitle = '';
 
-        for (const campaign of campaigns) {
-            // Skip campaigns not for this user's role
-            if (campaign.targetRole !== 'all' && campaign.targetRole !== userRole) {
-                continue;
-            }
+        for (const campaign of this.campaigns()) {
+            if (campaign.targetRole !== 'all' && campaign.targetRole !== userRole) continue;
 
-            // Check if product is in this campaign's related products
             if (campaign.relatedProductIds) {
                 const ids = campaign.relatedProductIds.split(',').map(id => parseInt(id.trim()));
                 if (ids.includes(product.id)) {
                     const match = campaign.discount.match(/(\d+)/);
                     const discountNum = match ? parseInt(match[1]) : 0;
-                    const isPercentage = campaign.discount.includes('%');
-                    const effectiveDiscount = isPercentage ? discountNum : 0;
+                    const effectiveDiscount = campaign.discount.includes('%') ? discountNum : 0;
 
                     if (effectiveDiscount > bestDiscount) {
                         bestDiscount = effectiveDiscount;
@@ -122,6 +143,6 @@ export class CafeDetail implements OnInit {
             }
         }
 
-        this.cartService.addToCart(product, bestDiscount, bestCampaignTitle);
+        return { discount: bestDiscount, campaignTitle: bestCampaignTitle };
     }
 }

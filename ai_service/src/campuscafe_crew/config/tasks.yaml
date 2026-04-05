@@ -1,0 +1,84 @@
+# tasks.yaml - CampusCafe AI Task Definitions
+
+recommend_meal_task:
+  description: >
+    Analyze the current menu from the CampusCafe system and recommend
+    the best meal options for the user. Consider the following constraints:
+    - Budget limit: {budget} TL
+    - Dietary preferences: {dietary_preferences}
+    - Time of day: {time_of_day}
+    
+    Search the menu for available items, calculate optimal combinations
+    that maximize value within the budget, and present recommendations
+    with reasoning for each choice.
+  expected_output: >
+    A structured list of 2-3 meal recommendations, each containing:
+    - Item name(s) and prices
+    - Total cost
+    - Why this option is recommended (value, nutrition, popularity)
+    - Any active promotions that apply
+  agent: budget_health_advisor
+
+predict_preorder_task:
+  description: >
+    Analyze the order history for user {user_id} and the current
+    cafe status to generate a personalized pre-order suggestion.
+    
+    Steps:
+    1. Review the user's past ordering patterns (time, items, frequency)
+    2. Check current menu availability
+    3. Predict when the user is likely to order next
+    4. Suggest a pre-order with estimated pickup time
+    
+    Current time: {current_time}
+    Cafe ID: {cafe_id}
+  expected_output: >
+    A personalized pre-order suggestion including:
+    - Recommended items based on past preferences
+    - Suggested order time and pickup time
+    - Estimated wait time savings
+    - Current availability confirmation
+  agent: preorder_predictor
+
+monitor_inventory_task:
+  description: >
+    Perform an inventory and trend analysis for cafe {cafe_id}.
+    
+    Steps:
+    1. Check current inventory levels for all products
+    2. Analyze recent sales trends (last 7 days)
+    3. Identify items running low or trending unusually
+    4. Compare current stock against predicted demand
+    
+    Generate alerts for any critical situations and suggest
+    actionable recommendations for the cafe owner.
+  expected_output: >
+    An inventory report containing:
+    - Critical alerts (low stock items)
+    - Trending items (unusual demand increases)
+    - Recommended actions (restock, menu adjustments, pricing)
+    - Predicted demand for the next 24 hours
+  agent: inventory_trend_monitor
+
+create_campaign_task:
+  description: >
+    Evaluate the current sales data and inventory for cafe {cafe_id}
+    to determine if a promotional campaign should be created.
+    
+    Steps:
+    1. Identify slow-selling or surplus perishable items
+    2. Calculate optimal discount percentages
+    3. Define target user segments
+    4. Create a compelling campaign message
+    
+    Focus on minimizing food waste while maximizing revenue recovery.
+    Campaign type options: flash_sale, combo_deal, loyalty_bonus
+  expected_output: >
+    A campaign proposal containing:
+    - Campaign name and type
+    - Target items with discount details
+    - Target user segment description
+    - Campaign duration and timing
+    - Estimated impact (waste reduction, revenue)
+    - Ready-to-publish promotional message
+  agent: campaign_manager

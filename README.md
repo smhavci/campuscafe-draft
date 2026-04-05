@@ -62,3 +62,6 @@ As part of the future development phase, an AI-agent layer will be integrated to
 - **Backend:** Node.js, Express.js
 - **Data:** In-memory JS data store (with init scripts)
 - **Documentation:** Markdown, Mermaid.js
+
+## Live Demo
+[CampusCafe Live Demo](https://campuscafe-draft.onrender.com)
