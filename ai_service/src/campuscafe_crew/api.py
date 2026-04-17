@@ -61,6 +61,34 @@ class GraphChatRequest(BaseModel):
 async def root():
     return {"status": "online", "message": "CampusCafe AI API is running"}
 
+@app.get("/ping")
+async def ping():
+    return {"message": "pong"}
+
+@app.post("/graph")
+@app.post("/api/graph")
+async def chat_with_graph(request: GraphChatRequest):
+    """LangGraph tabanlı akıllı asistan ile görüşme.
+
+    LangSmith tracing otomatik olarak aktiftir (.env üzerinden LANGCHAIN_TRACING_V2=true).
+    Her çağrı https://smith.langchain.com → 'campuscafe-ai' projesinde izlenebilir.
+    """
+    try:
+        print(f"🤖 LangGraph'a mesaj geldi: {request.message}")
+        initial_state = {
+            "messages": [HumanMessage(content=request.message)],
+            "next_step": "n/a",
+            "final_response": "Henüz yanıtlanmadı"
+        }
+        result = campus_app.invoke(initial_state)
+        return {
+            "response": result.get("final_response", "Yanıt oluşturulamadı"),
+            "path_taken": result.get("next_step", "unknown")
+        }
+    except Exception as e:
+        print(f"❌ LangGraph Hatası: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/chat/recommend")
 async def recommend_meal(request: MealRecommendationRequest):
@@ -116,35 +144,6 @@ async def create_campaign(request: InventoryMonitorRequest):
         return {"response": str(result)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/graph")
-@app.post("/graph/")
-async def chat_with_graph(request: GraphChatRequest):
-    """LangGraph tabanlı akıllı asistan ile görüşme."""
-    try:
-        print(f"🤖 LangGraph'a mesaj geldi: {request.message}")
-        
-        # En yalın state yapısı
-        initial_state = {
-            "messages": [HumanMessage(content=request.message)],
-            "next_step": "n/a",
-            "final_response": "Henüz yanıtlanmadı"
-        }
-        
-        # Grafik akışını çalıştır
-        print("🤖 Grafik akışı başlatılıyor...")
-        result = campus_app.invoke(initial_state)
-        print(f"🤖 Grafik akışı tamamlandı. Yanıt: {result.get('final_response')}")
-        
-        return {
-            "response": result.get("final_response", "Yanıt oluşturulamadı"),
-            "path_taken": result.get("next_step", "unknown")
-        }
-    except Exception as e:
-        print(f"❌ LangGraph Hatası: {str(e)}")
-        # 404 yerine net bir 500 hatası dönmesini sağlıyoruz
-        raise HTTPException(status_code=500, detail=f"Graph Error: {str(e)}")
 
 
 if __name__ == "__main__":
