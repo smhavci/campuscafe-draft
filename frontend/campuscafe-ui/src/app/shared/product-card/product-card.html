@@ -1,27 +1,51 @@
 <div class="product-card" (click)="onExplore()">
-    @if (product.brandName) {
-    <div class="brand-badge">
-        @if (product.brandLogo) { <img [src]="product.brandLogo" [alt]="product.brandName" /> }
-        @else { <span>{{ product.brandName }}</span> }
-    </div>
+
+  <!-- Üstteki görsel alanı -->
+  <div class="card-image-wrapper">
+    <img [src]="product.image" [alt]="product.name" class="card-image" loading="lazy" />
+
+    <!-- Kategori etiketi -->
+    <span class="card-category">{{ getCategoryLabel(product.category) }}</span>
+
+    <!-- Favori butonu -->
+    @if (authService.isLoggedIn()) {
+      <button class="fav-btn" [class.fav-active]="isFav" (click)="toggleFavorite($event)" title="Favorilere ekle">
+        {{ isFav ? '❤️' : '🤍' }}
+      </button>
     }
-    <div class="card-image-wrapper">
-        <img [src]="product.image" [alt]="product.name" class="card-image" loading="lazy" />
-        <span class="card-category">{{ product.category }}</span>
-        @if (authService.isLoggedIn()) {
-        <button class="fav-btn" [class.fav-active]="isFav" (click)="toggleFavorite($event)" title="Favorilere ekle">
-            {{ isFav ? '❤️' : '🤍' }}
-        </button>
+
+    <!-- Kalori rozeti -->
+    @if (product.calories) {
+      <span class="calorie-badge">🔥 {{ product.calories }} kal</span>
+    }
+  </div>
+
+  <!-- İçerik alanı -->
+  <div class="card-body">
+    <h3 class="card-title">{{ product.name }}</h3>
+    <p class="card-description">{{ product.description }}</p>
+
+    <!-- Alerjenler -->
+    @if (product.allergens && product.allergens.trim()) {
+      <div class="allergen-row">
+        @for (a of getAllergens(product.allergens); track a) {
+          <span class="allergen-chip">⚠️ {{ a }}</span>
         }
+      </div>
+    }
+
+    <!-- Alt satır: fiyat + yıldız maliyeti + ekle butonu -->
+    <div class="card-footer">
+      <div class="price-group">
+        <span class="card-price">₺{{ product.price }}</span>
+        @if (product.starCost) {
+          <span class="star-cost">⭐ {{ product.starCost }}</span>
+        }
+      </div>
+      <button class="add-btn" (click)="onAddToCart($event)">
+        <span>+</span> Ekle
+      </button>
     </div>
-    <div class="card-body">
-        <h3 class="card-title">{{ product.name }}</h3>
-        <p class="card-description">{{ product.description }}</p>
-        <div class="card-footer">
-            <span class="card-price">{{ product.price | currency:'TRY':'₺':'1.0-0' }}</span>
-            <button class="add-btn" (click)="onAddToCart($event)">
-                <span class="btn-icon">+</span> Ekle
-            </button>
-        </div>
-    </div>
+  </div>
+
 </div>

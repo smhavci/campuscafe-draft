@@ -13,12 +13,14 @@ export interface AppNotification {
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    // Geriye dönük uyumluluk — eski polling dot'ları (navbar hâlâ bunları kullanıyor)
     orderDot = signal(false);
     dashboardDot = signal(false);
 
     private _notifications = signal<AppNotification[]>([]);
+    private _toasts = signal<AppNotification[]>([]);
+
     readonly notifications = this._notifications.asReadonly();
+    readonly toasts = this._toasts.asReadonly();
     readonly unreadCount = computed(() => this._notifications().filter(n => !n.read).length);
 
     constructor(private socket: SocketService) {
@@ -26,12 +28,11 @@ export class NotificationService {
     }
 
     private listenToSocketEvents() {
-        // Sipariş durumu değişti
         this.socket.on<{ orderId: number; status: string }>('order_status_changed').subscribe(data => {
             if (data.status === 'ready') {
                 this.add({
                     type: 'order_ready',
-                    title: 'Siparişin hazır!',
+                    title: 'Siparişin hazır! ✅',
                     message: `#${data.orderId} numaralı siparişin teslim almaya hazır.`,
                     link: '/orders',
                 });
@@ -39,7 +40,6 @@ export class NotificationService {
             }
         });
 
-        // Yıldız kazanıldı
         this.socket.on<{ amount: number; total: number }>('stars_earned').subscribe(data => {
             this.add({
                 type: 'stars_earned',
@@ -49,7 +49,6 @@ export class NotificationService {
             });
         });
 
-        // Sipariş ürünü iptal edildi
         this.socket.on<{ orderId: number; itemName: string; refundAmount: number }>('order_item_cancelled').subscribe(data => {
             this.add({
                 type: 'order_item_cancelled',
@@ -60,11 +59,10 @@ export class NotificationService {
             this.orderDot.set(true);
         });
 
-        // Kafe sahibi — yeni sipariş
         this.socket.on<{ orderId: number; customerName: string; itemCount: number }>('new_order').subscribe(data => {
             this.add({
                 type: 'new_order',
-                title: 'Yeni Sipariş!',
+                title: '🛎️ Yeni Sipariş!',
                 message: `${data.customerName} · ${data.itemCount} ürün`,
                 link: '/dashboard',
             });
@@ -79,7 +77,15 @@ export class NotificationService {
             read: false,
             timestamp: new Date(),
         };
+        // Kalıcı panel geçmişi
         this._notifications.update(list => [newNotif, ...list].slice(0, 20));
+        // Toast: 5 saniye sonra otomatik kapanır
+        this._toasts.update(list => [newNotif, ...list]);
+        setTimeout(() => this.dismissToast(newNotif.id), 5000);
+    }
+
+    dismissToast(id: string) {
+        this._toasts.update(list => list.filter(t => t.id !== id));
     }
 
     markAllRead() {
@@ -98,7 +104,6 @@ export class NotificationService {
         this.dashboardDot.set(false);
     }
 
-    // Geriye dönük uyumluluk metodları
     markOrdersSeen() {
         this.orderDot.set(false);
         localStorage.setItem('lastOrderCheck', new Date().toISOString());

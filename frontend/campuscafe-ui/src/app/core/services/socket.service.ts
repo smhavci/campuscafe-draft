@@ -22,7 +22,7 @@ export class SocketService implements OnDestroy {
     private connect(userId: number, role: string, cafeId?: number) {
         if (this.socket?.connected) return;
 
-        this.socket = io(this.SERVER_URL, { transports: ['websocket'] });
+        this.socket = io(this.SERVER_URL, { transports: ['polling', 'websocket'] });
 
         this.socket.on('connect', () => {
             this.socket!.emit('join_user', userId);

@@ -39,4 +39,19 @@ export class ProductCard {
     get isFav(): boolean {
         return this.favoriteService.isFavorite(this.product.id);
     }
+
+    getAllergens(allergens: string): string[] {
+        return allergens.split(',').map(a => a.trim()).filter(Boolean);
+    }
+
+    getCategoryLabel(cat: string): string {
+        const map: Record<string, string> = {
+            coffee: '☕ Kahve',
+            'cold drinks': '🧊 Soğuk',
+            dessert: '🍰 Tatlı',
+            food: '🥪 Yemek',
+            bakery: '🥐 Unlu',
+        };
+        return map[cat] ?? cat;
+    }
 }

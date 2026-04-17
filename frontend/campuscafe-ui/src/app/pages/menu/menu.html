@@ -1,41 +1,83 @@
 <div class="menu-page">
-    <div class="page-header">
-        <h1 class="page-title">Our Menu</h1>
-        <p class="page-subtitle">Explore our selection of handcrafted drinks and treats</p>
+
+  <!-- Hero Banner -->
+  <div class="menu-hero">
+    <div class="hero-content">
+      <h1 class="hero-title">Menümüz</h1>
+      <p class="hero-subtitle">Tüm kafelerimizden el yapımı içecekler ve lezzetler</p>
+      <div class="hero-stats">
+        <span class="stat">☕ {{ countByCategory()['coffee'] || 0 }} kahve</span>
+        <span class="stat">🍰 {{ countByCategory()['dessert'] || 0 }} tatlı</span>
+        <span class="stat">🥪 {{ (countByCategory()['food'] || 0) + (countByCategory()['bakery'] || 0) }} yiyecek</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arama + Filtre -->
+  <div class="controls">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Ürün ara..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearch($event)"
+        class="search-input"
+      />
+      @if (searchQuery()) {
+        <button class="search-clear" (click)="onSearch('')">×</button>
+      }
     </div>
 
     <div class="category-filters">
-        <button class="filter-btn" [class.active]="activeCategory() === 'all'" (click)="filterByCategory('all')">
-            🍽️ All
-        </button>
-        @for (category of categories(); track category.id) {
+      <button class="filter-btn" [class.active]="activeCategory() === 'all'" (click)="filterByCategory('all')">
+        🍽️ Tümü <span class="filter-count">{{ countByCategory()['all'] }}</span>
+      </button>
+      @for (category of categories(); track category.id) {
         <button class="filter-btn" [class.active]="activeCategory() === category.name"
-            (click)="filterByCategory(category.name)">
-            {{ category.icon }} {{ category.displayName }}
+          (click)="filterByCategory(category.name)">
+          {{ category.icon }} {{ category.displayName }}
+          <span class="filter-count">{{ countByCategory()[category.name] || 0 }}</span>
         </button>
-        }
+      }
     </div>
+  </div>
 
-    <div class="products-grid">
-        @for (product of filteredProducts(); track product.id) {
-        <app-product-card 
-            [product]="product" 
-            (addToCart)="onAddToCart($event)" 
-            (explore)="openDetail($event)" />
-        }
-    </div>
-
-    @if (selectedProjectForDetail(); as p) {
-    <app-product-detail 
-        [product]="p" 
-        (close)="closeDetail()" 
-        (confirm)="onConfirmCustomization($event)"
-        (saveFavorite)="onSaveFavorite($event)" />
+  <!-- Sonuç sayısı -->
+  <div class="results-info">
+    @if (searchQuery()) {
+      <span>"{{ searchQuery() }}" için {{ filteredProducts().length }} sonuç</span>
+    } @else {
+      <span>{{ filteredProducts().length }} ürün gösteriliyor</span>
     }
+  </div>
 
-    @if (filteredProducts().length === 0) {
+  <!-- Ürün Grid -->
+  <div class="products-grid">
+    @for (product of filteredProducts(); track product.id) {
+      <app-product-card
+        [product]="product"
+        (addToCart)="onAddToCart($event)"
+        (explore)="openDetail($event)" />
+    }
+  </div>
+
+  <!-- Boş durum -->
+  @if (filteredProducts().length === 0) {
     <div class="empty-state">
-        <p>No products found in this category.</p>
+      <span class="empty-icon">🔍</span>
+      <p>Aramanızla eşleşen ürün bulunamadı.</p>
+      <button class="empty-reset" (click)="onSearch(''); filterByCategory('all')">Filtreleri Temizle</button>
     </div>
-    }
+  }
+
+  <!-- Ürün Detay Modal -->
+  @if (selectedProjectForDetail(); as p) {
+    <app-product-detail
+      [product]="p"
+      (close)="closeDetail()"
+      (confirm)="onConfirmCustomization($event)"
+      (saveFavorite)="onSaveFavorite($event)" />
+  }
+
 </div>
