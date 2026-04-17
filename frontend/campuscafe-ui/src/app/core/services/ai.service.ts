@@ -36,7 +36,7 @@ export class AIService {
     }
 
     askGraph(message: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/chat/graph`, {
+        return this.http.post(`${this.apiUrl}/graph`, {
             message
         });
     }

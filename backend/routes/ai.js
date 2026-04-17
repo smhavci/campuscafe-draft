@@ -10,6 +10,24 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
  * @desc    Proxy request to the Python AI service
  * @access  Private (Authenticated)
  */
+
+router.post('/graph', async (req, res) => {
+    try {
+        console.log(`🤖 Proxying LangGraph request...`);
+        const response = await axios.post(`${AI_SERVICE_URL}/graph`, req.body, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 60000
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error('❌ AI Service Error:', error.message);
+        res.status(error.response?.status || 500).json({
+            error: 'AI servisi ile iletişim kurulurken bir hata oluştu.',
+            details: error.response?.data?.detail || error.message
+        });
+    }
+});
+
 router.post('/chat/:mode', async (req, res) => {
     const { mode } = req.params;
     const body = req.body;
