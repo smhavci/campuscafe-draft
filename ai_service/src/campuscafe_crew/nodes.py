@@ -1,6 +1,6 @@
 from typing import TypedDict, Annotated, List, Union
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import BaseMessage, HumanMessage, AIChatMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from campuscafe_crew.crew import CampusCafeCrew
 
 class GraphState(TypedDict):
