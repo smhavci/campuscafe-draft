@@ -1,82 +1,119 @@
-<nav class="navbar">
-  <a routerLink="/" class="brand">☕ CampusCafe</a>
-  <div class="nav-links">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-    <a routerLink="/campaigns" routerLinkActive="active">Kampanyalar</a>
-    <a routerLink="/map" routerLinkActive="active">📍 Kafeler</a>
-    <a routerLink="/search" routerLinkActive="active">🔍 Ara</a>
+<nav class="sidebar">
+  <!-- Logo -->
+  <a routerLink="/" class="brand">
+    <span class="brand-icon">☕</span>
+    <span class="brand-text">CampusCafe</span>
+  </a>
 
-    @if (authService.isLoggedIn()) {
+  <div class="nav-section">
+    <span class="nav-section-label">Keşfet</span>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <span class="nav-icon">🏠</span><span>Ana Sayfa</span>
+    </a>
+    <a routerLink="/campaigns" routerLinkActive="active">
+      <span class="nav-icon">🎉</span><span>Kampanyalar</span>
+    </a>
+    <a routerLink="/map" routerLinkActive="active">
+      <span class="nav-icon">📍</span><span>Kafeler</span>
+    </a>
+    <a routerLink="/search" routerLinkActive="active">
+      <span class="nav-icon">🔍</span><span>Ara</span>
+    </a>
+  </div>
+
+  @if (authService.isLoggedIn()) {
+
     @if (authService.isOwner()) {
-    <a routerLink="/dashboard" routerLinkActive="active" class="dashboard-link nav-dot-wrapper">
-      📊 Dashboard
-      @if (notificationService.dashboardDot()) {
-      <span class="nav-dot"></span>
-      }
-    </a>
-    <a routerLink="/menu-management" routerLinkActive="active" class="menu-mgmt-link">
-      🍽️ Menü & Kampanya
-    </a>
+    <div class="nav-section">
+      <span class="nav-section-label">Yönetim</span>
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-dot-wrapper">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+        @if (notificationService.dashboardDot()) {
+          <span class="nav-dot"></span>
+        }
+      </a>
+      <a routerLink="/menu-management" routerLinkActive="active">
+        <span class="nav-icon">🍽️</span><span>Menü & Kampanya</span>
+      </a>
+    </div>
     }
-      <a routerLink="/rewards" routerLinkActive="active" class="rewards-link">
-        🎁 Kazançlarım
+
+    <div class="nav-section">
+      <span class="nav-section-label">Hesabım</span>
+      <a routerLink="/rewards" routerLinkActive="active">
+        <span class="nav-icon">🎁</span>
+        <span>Kazançlarım</span>
         <span class="star-pill">⭐ {{ authService.currentUser()?.stars || 0 }}</span>
       </a>
-    <a routerLink="/cart" routerLinkActive="active" class="cart-link">
-      🛒 Sepet
-      @if (cartService.totalItems() > 0) {
-      <span class="cart-badge">{{ cartService.totalItems() }}</span>
-      }
-    </a>
-    <a routerLink="/orders" routerLinkActive="active" class="nav-dot-wrapper">
-      📦 Siparişlerim
-      @if (notificationService.orderDot()) {
-      <span class="nav-dot"></span>
-      }
-    </a>
-
-    <!-- Kullanıcı adına tıklayınca profile git -->
-    <a routerLink="/profile" routerLinkActive="active" class="user-name">
-      @if (authService.isOwner()) { ☕ }
-      @else if (authService.isTeacher()) { 👨‍🏫 }
-      @else { 👋 }
-      {{ authService.currentUser()?.firstName }}
-    </a>
-
-    <!-- Bildirim zili -->
-    <div class="notif-wrapper">
-      <button class="notif-btn" (click)="toggleNotifPanel()">
-        🔔
-        @if (notificationService.unreadCount() > 0) {
-          <span class="notif-badge">{{ notificationService.unreadCount() }}</span>
+      <a routerLink="/cart" routerLinkActive="active" class="nav-dot-wrapper">
+        <span class="nav-icon">🛒</span><span>Sepet</span>
+        @if (cartService.totalItems() > 0) {
+          <span class="cart-badge">{{ cartService.totalItems() }}</span>
         }
-      </button>
-      @if (notifPanelOpen()) {
-        <div class="notif-panel">
-          <div class="notif-panel-header">
-            <span>Bildirimler</span>
-            @if (notificationService.notifications().length > 0) {
-              <button class="notif-clear" (click)="notificationService.dismissAll()">Temizle</button>
-            }
-          </div>
-          @if (notificationService.notifications().length === 0) {
-            <div class="notif-empty">Henüz bildirim yok.</div>
-          }
-          @for (notif of notificationService.notifications(); track notif.id) {
-            <div class="notif-item" [class.unread]="!notif.read" (click)="goToNotif(notif.link)">
-              <div class="notif-title">{{ notif.title }}</div>
-              <div class="notif-msg">{{ notif.message }}</div>
-              <div class="notif-time">{{ notif.timestamp | date:'HH:mm' }}</div>
-            </div>
-          }
-        </div>
-      }
+      </a>
+      <a routerLink="/orders" routerLinkActive="active" class="nav-dot-wrapper">
+        <span class="nav-icon">📦</span><span>Siparişlerim</span>
+        @if (notificationService.orderDot()) {
+          <span class="nav-dot"></span>
+        }
+      </a>
+      <a routerLink="/profile" routerLinkActive="active">
+        <span class="nav-icon">
+          @if (authService.isOwner()) { ☕ }
+          @else if (authService.isTeacher()) { 👨‍🏫 }
+          @else { 👋 }
+        </span>
+        <span>{{ authService.currentUser()?.firstName }}</span>
+      </a>
     </div>
 
-    <button class="logout-btn" (click)="logout()">Çıkış</button>
-    } @else {
-    <a routerLink="/login" routerLinkActive="active" class="login-link">Giriş Yap</a>
-    <a routerLink="/register" routerLinkActive="active" class="register-link">Kayıt Ol</a>
-    }
-  </div>
+    <!-- Bildirimler -->
+    <div class="nav-section notif-section">
+      <div class="notif-wrapper">
+        <button class="notif-btn" (click)="toggleNotifPanel()">
+          <span class="nav-icon">🔔</span>
+          <span>Bildirimler</span>
+          @if (notificationService.unreadCount() > 0) {
+            <span class="notif-badge">{{ notificationService.unreadCount() }}</span>
+          }
+        </button>
+        @if (notifPanelOpen()) {
+          <div class="notif-panel">
+            <div class="notif-panel-header">
+              <span>Bildirimler</span>
+              @if (notificationService.notifications().length > 0) {
+                <button class="notif-clear" (click)="notificationService.dismissAll()">Temizle</button>
+              }
+            </div>
+            @if (notificationService.notifications().length === 0) {
+              <div class="notif-empty">Henüz bildirim yok.</div>
+            }
+            @for (notif of notificationService.notifications(); track notif.id) {
+              <div class="notif-item" [class.unread]="!notif.read" (click)="goToNotif(notif.link)">
+                <div class="notif-title">{{ notif.title }}</div>
+                <div class="notif-msg">{{ notif.message }}</div>
+                <div class="notif-time">{{ notif.timestamp | date:'HH:mm' }}</div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" (click)="logout()">
+        <span>🚪</span> Çıkış Yap
+      </button>
+    </div>
+
+  } @else {
+    <div class="nav-section">
+      <a routerLink="/login" routerLinkActive="active" class="login-link">
+        <span class="nav-icon">🔑</span><span>Giriş Yap</span>
+      </a>
+      <a routerLink="/register" routerLinkActive="active" class="register-link">
+        <span class="nav-icon">✨</span><span>Kayıt Ol</span>
+      </a>
+    </div>
+  }
 </nav>

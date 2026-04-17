@@ -92,6 +92,12 @@ export class NotificationService {
         this._notifications.update(list => list.filter(n => n.id !== id));
     }
 
+    dismissAll() {
+        this._notifications.set([]);
+        this.orderDot.set(false);
+        this.dashboardDot.set(false);
+    }
+
     // Geriye dönük uyumluluk metodları
     markOrdersSeen() {
         this.orderDot.set(false);
