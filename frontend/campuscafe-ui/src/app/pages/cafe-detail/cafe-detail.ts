@@ -1,16 +1,17 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CafeService, Cafe, CafeCampaign } from '../../core/services/cafe.service';
-import { Product } from '../../core/services/product.service';
+import { Product, ProductOptionItem, ProductService } from '../../core/services/product.service';
 import { CategoryService, Category } from '../../core/services/category.service';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProductCard } from '../../shared/product-card/product-card';
+import { ProductDetail } from '../../shared/product-detail/product-detail';
 
 @Component({
     selector: 'app-cafe-detail',
     standalone: true,
-    imports: [RouterLink, ProductCard],
+    imports: [RouterLink, ProductCard, ProductDetail],
     templateUrl: './cafe-detail.html',
     styleUrl: './cafe-detail.css'
 })
@@ -25,13 +26,15 @@ export class CafeDetail implements OnInit {
     visibleCampaigns = signal<CafeCampaign[]>([]);
 
     showConflictModal = signal(false);
-    pendingProduct = signal<{ product: Product; discount: number; campaignTitle: string } | null>(null);
+    selectedProduct = signal<Product | null>(null);
+    pendingProduct = signal<{ product: Product; selectedOptions: ProductOptionItem[]; discount: number; campaignTitle: string } | null>(null);
 
     constructor(
         private route: ActivatedRoute,
         private cafeService: CafeService,
+        private productService: ProductService,
         private categoryService: CategoryService,
-        public cartService: CartService, // FIX: private → public (HTML'de kullanılıyor)
+        public cartService: CartService,
         private authService: AuthService
     ) { }
 
@@ -92,15 +95,38 @@ export class CafeDetail implements OnInit {
     }
 
     onAddToCart(product: Product): void {
+        // If product has options, we should open modal instead of adding directly
+        // But some simple products might not have options. 
+        // We'll check via getProductById or just use the modal for everything to be safe.
+        this.openProductDetail(product);
+    }
+
+    openProductDetail(product: Product): void {
+        // Fetch full product with options
+        this.productService.getProductById(product.id).subscribe(fullProduct => {
+            this.selectedProduct.set(fullProduct);
+        });
+    }
+
+    closeProductDetail(): void {
+        this.selectedProduct.set(null);
+    }
+
+    onProductDetailConfirm(selectedOptions: ProductOptionItem[]): void {
+        const product = this.selectedProduct();
+        if (!product) return;
+
         const { discount, campaignTitle } = this.getBestCampaign(product);
         const cafeName = this.cafe()?.name || '';
 
-        const result = this.cartService.addToCart(product, discount, campaignTitle, cafeName);
+        const result = this.cartService.addToCart(product, selectedOptions, discount, campaignTitle, cafeName);
 
         if (result === 'conflict') {
-            this.pendingProduct.set({ product, discount, campaignTitle });
+            this.pendingProduct.set({ product, selectedOptions, discount, campaignTitle });
             this.showConflictModal.set(true);
         }
+
+        this.closeProductDetail();
     }
 
     confirmClearAndAdd(): void {
@@ -109,7 +135,7 @@ export class CafeDetail implements OnInit {
 
         const cafeName = this.cafe()?.name || '';
         this.cartService.clearCart();
-        this.cartService.addToCart(pending.product, pending.discount, pending.campaignTitle, cafeName);
+        this.cartService.addToCart(pending.product, pending.selectedOptions, pending.discount, pending.campaignTitle, cafeName);
 
         this.showConflictModal.set(false);
         this.pendingProduct.set(null);

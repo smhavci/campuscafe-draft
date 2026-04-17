@@ -5,6 +5,11 @@
         <p class="page-subtitle">Geçmiş ve aktif siparişlerin</p>
     </div>
 
+    <!-- Toast mesaj -->
+    @if (reorderMsg()) {
+    <div class="toast-msg">{{ reorderMsg() }}</div>
+    }
+
     @if (loading()) {
     <div class="loading-state">
         <p>Siparişler yükleniyor...</p>
@@ -22,7 +27,7 @@
     <div class="orders-list">
         @for (order of orders(); track order.id) {
         <div class="order-card">
-            <div class="order-header">
+            <div class="order-header" (click)="toggleTimeline(order.id)">
                 <div class="order-id">
                     <span class="order-label">Sipariş</span>
                     <span class="order-number">#{{ order.id }}</span>
@@ -33,32 +38,142 @@
             </div>
 
             @if (order.cafeName) {
-            <div class="order-cafe">☕ {{ order.cafeName }}</div>
+            <div class="order-cafe-row">
+                <span class="order-cafe">☕ {{ order.cafeName }}</span>
+                @if (order.pickupTime) {
+                <span class="pickup-badge">⏱️ {{ formatShortTime(order.pickupTime) }}</span>
+                }
+            </div>
+            }
+
+            <!-- Timeline UI -->
+            @if (expandedOrderId() === order.id) {
+            <div class="order-timeline-container">
+                <div class="timeline-visual">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-step" [class.completed]="true">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Alındı</span>
+                    </div>
+                    <div class="timeline-step" [class.active]="order.status === 'preparing'" [class.completed]="['ready', 'delivered'].includes(order.status)">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Hazırlanıyor</span>
+                    </div>
+                    <div class="timeline-step" [class.active]="order.status === 'ready'" [class.completed]="order.status === 'delivered'">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Hazır</span>
+                    </div>
+                    <div class="timeline-step" [class.completed]="order.status === 'delivered'">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Teslim Edildi</span>
+                    </div>
+                </div>
+
+                @if (timelineLoading()) {
+                <div class="timeline-loading">Detaylar yükleniyor...</div>
+                } @else {
+                <div class="timeline-events">
+                    @for (event of timeline(); track $index) {
+                    <div class="timeline-event">
+                        <span class="event-time">{{ formatShortTime(event.timestamp) }}</span>
+                        <span class="event-text">{{ getStatusLabel(event.status) }}</span>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
             }
 
             <div class="order-items">
                 @for (item of order.items; track item.itemId) {
-                <div class="order-item" [class.item-cancelled]="item.itemStatus === 'cancelled'">
-                    <span class="item-qty">{{ item.quantity }}x</span>
-                    <span class="item-name">
-                        {{ item.productName }}
-                        @if (item.itemStatus === 'cancelled') {
-                        <span class="cancelled-tag">İPTAL</span>
+                    <div class="order-item-container">
+                        <div class="order-item" [class.item-cancelled]="item.itemStatus === 'cancelled'">
+                            <span class="item-qty">{{ item.quantity }}x</span>
+                            <span class="item-name">
+                                {{ item.productName }}
+                                @if (item.itemStatus === 'cancelled') {
+                                <span class="cancelled-tag">İPTAL</span>
+                                }
+                            </span>
+                            <span class="item-price">{{ item.lineTotal }} ₺</span>
+                        </div>
+                        
+                        <!-- Options List -->
+                        @if (item.options && item.options.length > 0) {
+                        <div class="item-options-detail">
+                            @for (opt of item.options; track opt.name) {
+                            <span class="opt-text">+ {{ opt.name }}</span>
+                            }
+                        </div>
                         }
-                    </span>
-                    <span class="item-price">{{ item.lineTotal }} ₺</span>
-                </div>
-                @if (item.itemStatus === 'cancelled' && item.cancelReason) {
-                <div class="cancel-reason">💬 {{ item.cancelReason }}</div>
-                }
+                    </div>
+
+                    @if (item.itemStatus === 'cancelled' && item.cancelReason) {
+                    <div class="cancel-reason">💬 {{ item.cancelReason }}</div>
+                    }
+
+                    <!-- Review butonu -->
+                    @if (order.status === 'delivered' && item.itemStatus !== 'cancelled') {
+                        <div class="review-row">
+                            @if (hasReviewed(item.itemId, order.id)) {
+                            <span class="reviewed-badge">⭐ Değerlendirildi</span>
+                            } @else {
+                            <button class="review-btn" (click)="openReviewModal(item.itemId, order.id, item.productName)">
+                                ⭐ Değerlendir
+                            </button>
+                            }
+                        </div>
+                    }
                 }
             </div>
-
+            
+            <!-- Payment and Footer -->
             <div class="order-footer">
-                <span class="order-date">{{ formatDate(order.createdAt) }}</span>
-                <span class="order-total">Toplam: <strong>{{ order.totalAmount }} ₺</strong></span>
+                <div class="order-meta">
+                    <span class="order-date">{{ formatDate(order.createdAt) }}</span>
+                    <span class="payment-badge">{{ order.paymentMethod === 'wallet' ? '💳 Cüzdan' : '💳 Kart' }}</span>
+                </div>
+                <div class="order-footer-right">
+                    <span class="order-total">Toplam: <strong>{{ order.totalAmount }} ₺</strong></span>
+                    @if (order.status === 'delivered') {
+                    <button class="reorder-btn" (click)="reorder(order.id)" [disabled]="reorderLoading() === order.id">
+                        {{ reorderLoading() === order.id ? '⏳' : '🔄' }} Tekrar Ver
+                    </button>
+                    }
+                </div>
             </div>
         </div>
         }
     </div>
 </div>
+
+<!-- Review Modal -->
+@if (showReviewModal()) {
+<div class="review-overlay" (click)="closeReviewModal()">
+    <div class="review-modal" (click)="$event.stopPropagation()">
+        <h3 class="review-modal-title">⭐ Değerlendir</h3>
+        <p class="review-product-name">{{ reviewProductName() }}</p>
+
+        <div class="star-selector">
+            @for (s of stars; track s) {
+            <button class="star-btn" [class.star-filled]="s <= reviewRating()" (click)="setRating(s)">
+                {{ s <= reviewRating() ? '★' : '☆' }}
+            </button>
+            }
+        </div>
+
+        <textarea class="review-comment" [(ngModel)]="reviewComment" placeholder="Yorumunuz (opsiyonel)" rows="3"></textarea>
+
+        @if (reviewMsg()) {
+        <p class="review-error">{{ reviewMsg() }}</p>
+        }
+
+        <div class="review-actions">
+            <button class="review-submit-btn" (click)="submitReview()" [disabled]="reviewSubmitting()">
+                {{ reviewSubmitting() ? 'Gönderiliyor...' : 'Gönder' }}
+            </button>
+            <button class="review-cancel-btn" (click)="closeReviewModal()">Vazgeç</button>
+        </div>
+    </div>
+</div>
+}

@@ -31,66 +31,113 @@
     <div class="redeem-error">{{ redeemError() }}</div>
     }
 
-    @for (card of cards(); track card.id) {
-    <div class="loyalty-card" [style.--card-color]="card.cafeColor">
-        <!-- Card Header -->
-        <div class="card-header">
-            <div class="card-cafe-info">
-                <div class="cafe-logo">
-                    <span class="logo-icon">🚐</span>
-                </div>
-                <div>
-                    <h2 class="card-cafe-name">{{ card.cafeName }}</h2>
-                    <p class="card-subtitle">Sadakat Kartı</p>
-                </div>
-            </div>
-            @if (card.totalRedeemed > 0) {
-            <div class="redeemed-badge">
-                🎉 {{ card.totalRedeemed }} ücretsiz kahve kullanıldı
-            </div>
-            }
-        </div>
+    @if (redeemMsg()) {
+    <div class="redeem-success">{{ redeemMsg() }}</div>
+    }
+    @if (redeemError()) {
+    <div class="redeem-error">{{ redeemError() }}</div>
+    }
 
-        <!-- Stamp Grid -->
-        <div class="stamp-grid">
-            @for (filled of getStampArray(card.stamps); track $index) {
-            <div class="stamp-slot" [class.filled]="filled">
-                @if (filled) {
-                <div class="stamp-icon">
-                    <span class="stamp-van">🚐</span>
+    <!-- 🌟 Star System Hero Section -->
+    <div class="star-hero-card">
+        <div class="star-main-info">
+            <div class="star-count-wrapper">
+                <span class="star-total">{{ starStatus()?.stars || 0 }}</span>
+                <span class="star-unit">Yıldızım</span>
+            </div>
+            <div class="star-reward-progress">
+                <p class="progress-label">Hediye kahveye {{ (starStatus()?.nextRewardThreshold || 15) - (starStatus()?.stars || 0) > 0 ? (starStatus()?.nextRewardThreshold || 15) - (starStatus()?.stars || 0) : 0 }} yıldız kaldı</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill star-fill" 
+                         [style.width.%]="((starStatus()?.stars || 0) / (starStatus()?.nextRewardThreshold || 15)) * 100">
+                    </div>
                 </div>
-                } @else {
-                <span class="stamp-number">{{ $index + 1 }}</span>
+                <div class="reward-milestones">
+                    <span [class.active]="(starStatus()?.stars || 0) >= 15">☕ 15</span>
+                    <span [class.active]="(starStatus()?.stars || 0) >= 30">🍰 30</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="star-history-mini">
+            <h3>Son Yıldız Hareketleri</h3>
+            <div class="history-list">
+                @for (entry of starHistory().slice(0, 3); track entry.id) {
+                <div class="history-item">
+                    <div class="history-info">
+                        <span class="history-desc">{{ entry.description }}</span>
+                        <span class="history-date">{{ entry.date | date:'dd MMM, HH:mm' }}</span>
+                    </div>
+                    <span class="history-change" [class.plus]="entry.type === 'earn'">
+                        {{ entry.change }}
+                    </span>
+                </div>
+                }
+                @if (starHistory().length === 0) {
+                <p class="empty-history">Henüz yıldız kazanmadın. Hemen sipariş ver!</p>
                 }
             </div>
+        </div>
+    </div>
+
+    <h2 class="sub-section-title">Kafe Özel Kartlarım</h2>
+
+    <div class="loyalty-cards-grid">
+        @for (card of cards(); track card.id) {
+        <div class="loyalty-card" [style.--card-color]="card.cafeColor">
+            <!-- Card Header -->
+            <div class="card-header">
+                <div class="card-cafe-info">
+                    <div class="cafe-logo">
+                        <span class="logo-icon">☕</span>
+                    </div>
+                    <div>
+                        <h2 class="card-cafe-name">{{ card.cafeName }}</h2>
+                        <p class="card-subtitle">Damga Kartı</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stamp Grid -->
+            <div class="stamp-grid">
+                @for (filled of getStampArray(card.stamps); track $index) {
+                <div class="stamp-slot" [class.filled]="filled">
+                    @if (filled) {
+                    <div class="stamp-icon">
+                        <span class="stamp-check">✓</span>
+                    </div>
+                    } @else {
+                    <span class="stamp-number">{{ $index + 1 }}</span>
+                    }
+                </div>
+                }
+                <div class="stamp-slot free-slot" [class.ready]="canRedeem(card)">
+                    <span class="free-label">🎁</span>
+                    <span class="free-text">FREE</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-section">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" [style.width.%]="(card.stamps / 9) * 100"></div>
+                </div>
+                <span class="progress-text">{{ card.stamps }} / 9 damga</span>
+            </div>
+
+            <!-- Redeem Button -->
+            @if (canRedeem(card)) {
+            <button class="redeem-btn" (click)="openPicker(card)">
+                ☕ Ücretsiz Kahveni Al!
+            </button>
+            } @else {
+            <p class="card-info">
+                {{ 9 - card.stamps }} kahve daha → ücretsiz kahve 🎉
+            </p>
             }
-            <!-- 10th slot = Free Coffee -->
-            <div class="stamp-slot free-slot" [class.ready]="canRedeem(card)">
-                <span class="free-label">🎁</span>
-                <span class="free-text">FREE</span>
-            </div>
         </div>
-
-        <!-- Progress Bar -->
-        <div class="progress-section">
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" [style.width.%]="(card.stamps / 9) * 100"></div>
-            </div>
-            <span class="progress-text">{{ card.stamps }} / 9 damga</span>
-        </div>
-
-        <!-- Redeem Button -->
-        @if (canRedeem(card)) {
-        <button class="redeem-btn" (click)="openPicker(card)">
-            ☕ Ücretsiz Kahveni Al!
-        </button>
-        } @else {
-        <p class="card-info">
-            {{ 9 - card.stamps }} kahve daha → ücretsiz kahve 🎉
-        </p>
         }
     </div>
-    }
     }
 </div>
 

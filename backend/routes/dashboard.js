@@ -20,13 +20,13 @@ router.get('/orders', authMiddleware, requireRole('cafeOwner'), (req, res) => {
 
         const orders = db.prepare(
             `SELECT o.id, o.status, o.total_amount AS totalAmount,
-                    o.created_at AS createdAt,
+                    o.created_at AS createdAt, o.pickup_time AS pickupTime, o.payment_method AS paymentMethod,
                     u.first_name || ' ' || u.last_name AS customerName,
                     u.role AS customerRole
              FROM orders o
              JOIN users u ON u.id = o.user_id
              WHERE o.cafe_id = ? AND o.status IN ('preparing', 'ready')
-             ORDER BY o.created_at DESC`
+             ORDER BY o.pickup_time ASC, o.created_at DESC`
         ).all(cafeId);
 
         const getItems = db.prepare(
@@ -38,8 +38,15 @@ router.get('/orders', authMiddleware, requireRole('cafeOwner'), (req, res) => {
              WHERE oi.order_id = ?`
         );
 
+        const getOptions = db.prepare(
+            'SELECT name, price FROM order_item_options WHERE order_item_id = ?'
+        );
+
         for (const order of orders) {
             order.items = getItems.all(order.id);
+            for (const item of order.items) {
+                item.options = getOptions.all(item.id);
+            }
         }
 
         res.json(orders);
@@ -50,7 +57,6 @@ router.get('/orders', authMiddleware, requireRole('cafeOwner'), (req, res) => {
 });
 
 // GET /api/dashboard/history — Tüm siparişler (filtreli)
-// Query params: ?status=all|preparing|ready|delivered|cancelled  &date=YYYY-MM-DD  &page=1  &limit=15
 router.get('/history', authMiddleware, requireRole('cafeOwner'), (req, res) => {
     try {
         const cafeId = req.user.cafeId;
@@ -60,14 +66,12 @@ router.get('/history', authMiddleware, requireRole('cafeOwner'), (req, res) => {
         const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
         const offset   = (pageNum - 1) * limitNum;
 
-        // "all" = tüm siparişler (preparing dahil), diğerleri ilgili status
-        let statusClause = '1=1'; // tümü
+        let statusClause = '1=1';
         if (status === 'preparing') statusClause = "o.status = 'preparing'";
         if (status === 'ready')     statusClause = "o.status = 'ready'";
         if (status === 'delivered') statusClause = "o.status = 'delivered'";
         if (status === 'cancelled') statusClause = "o.status = 'cancelled'";
 
-        // Tarih filtresi
         let dateClause = '';
         const params = [cafeId];
         if (date) {
@@ -75,16 +79,15 @@ router.get('/history', authMiddleware, requireRole('cafeOwner'), (req, res) => {
             params.push(date);
         }
 
-        // Toplam kayıt sayısı
         const total = db.prepare(
             `SELECT COUNT(*) AS count FROM orders o
              WHERE o.cafe_id = ? AND ${statusClause} ${dateClause}`
         ).get(...params);
 
-        // Siparişleri getir
         const orders = db.prepare(
             `SELECT o.id, o.status, o.total_amount AS totalAmount,
                     o.created_at AS createdAt, o.updated_at AS updatedAt,
+                    o.pickup_time AS pickupTime, o.payment_method AS paymentMethod,
                     u.first_name || ' ' || u.last_name AS customerName,
                     u.role AS customerRole
              FROM orders o
@@ -102,9 +105,16 @@ router.get('/history', authMiddleware, requireRole('cafeOwner'), (req, res) => {
              JOIN products p ON p.id = oi.product_id
              WHERE oi.order_id = ?`
         );
+        
+        const getOptions = db.prepare(
+            'SELECT name, price FROM order_item_options WHERE order_item_id = ?'
+        );
 
         for (const order of orders) {
             order.items = getItems.all(order.id);
+            for (const item of order.items) {
+                item.options = getOptions.all(item.id);
+            }
         }
 
         res.json({
@@ -122,7 +132,7 @@ router.get('/history', authMiddleware, requireRole('cafeOwner'), (req, res) => {
     }
 });
 
-// PATCH /api/dashboard/orders/:id/status — Update order status
+// PATCH /api/dashboard/orders/:id/status
 router.patch('/orders/:id/status', authMiddleware, requireRole('cafeOwner'), (req, res) => {
     try {
         const cafeId = req.user.cafeId;
@@ -143,6 +153,7 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('cafeOwner'), (re
         }
 
         db.prepare('UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(status, orderId);
+        db.prepare('INSERT INTO order_events (order_id, status) VALUES (?, ?)').run(orderId, status);
 
         res.json({ message: 'Sipariş durumu güncellendi', orderId: parseInt(orderId), status });
     } catch (err) {
@@ -151,7 +162,7 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('cafeOwner'), (re
     }
 });
 
-// PATCH /api/dashboard/orders/:orderId/items/:itemId/cancel — Cancel a single item
+// PATCH /api/dashboard/orders/:orderId/items/:itemId/cancel
 router.patch('/orders/:orderId/items/:itemId/cancel', authMiddleware, requireRole('cafeOwner'), (req, res) => {
     try {
         const cafeId = req.user.cafeId;
@@ -222,16 +233,16 @@ router.get('/notifications', authMiddleware, requireRole('cafeOwner'), (req, res
     }
 });
 
-// GET /api/dashboard/analytics — Today's sales analytics
+// GET /api/dashboard/analytics
 router.get('/analytics', authMiddleware, requireRole('cafeOwner'), (req, res) => {
     try {
         const cafeId = req.user.cafeId;
-        const today = getLocalToday(); // timezone-safe
+        const today = getLocalToday();
 
         const summary = db.prepare(
             `SELECT
                COUNT(*) AS orderCount,
-               COALESCE(SUM(total_amount), 0) AS totalRevenue
+               COALESCE(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) AS totalRevenue
              FROM orders
              WHERE cafe_id = ?
                AND strftime('%Y-%m-%d', created_at) = ?
@@ -254,7 +265,7 @@ router.get('/analytics', authMiddleware, requireRole('cafeOwner'), (req, res) =>
              JOIN orders o ON o.id = oi.order_id
              WHERE o.cafe_id = ?
                AND strftime('%Y-%m-%d', o.created_at) = ?
-               AND o.status != 'cancelled'
+               AND o.status = 'delivered'
                AND oi.status = 'active'
              GROUP BY p.id
              ORDER BY totalQty DESC
@@ -268,6 +279,78 @@ router.get('/analytics', authMiddleware, requireRole('cafeOwner'), (req, res) =>
             byStatus,
             topProducts
         });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+// GET /api/dashboard/analytics/weekly
+router.get('/analytics/weekly', authMiddleware, requireRole('cafeOwner'), (req, res) => {
+    try {
+        const cafeId = req.user.cafeId;
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push(d.toISOString().split('T')[0]);
+        }
+
+        const result = days.map(date => {
+            const row = db.prepare(
+                `SELECT COUNT(*) AS orderCount,
+                        COALESCE(SUM(CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END), 0) AS revenue
+                 FROM orders WHERE cafe_id = ? AND strftime('%Y-%m-%d', created_at) = ? AND status != 'cancelled'`
+            ).get(cafeId, date);
+            return { date, orderCount: row.orderCount, revenue: row.revenue };
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+// GET /api/dashboard/analytics/hourly
+router.get('/analytics/hourly', authMiddleware, requireRole('cafeOwner'), (req, res) => {
+    try {
+        const cafeId = req.user.cafeId;
+        const today = getLocalToday();
+
+        const rows = db.prepare(
+            `SELECT CAST(strftime('%H', created_at) AS INTEGER) AS hour, COUNT(*) AS count
+             FROM orders WHERE cafe_id = ? AND strftime('%Y-%m-%d', created_at) = ? AND status != 'cancelled'
+             GROUP BY hour ORDER BY hour`
+        ).all(cafeId, today);
+
+        const hourly = Array.from({ length: 24 }, (_, i) => {
+            const found = rows.find(r => r.hour === i);
+            return { hour: i, count: found ? found.count : 0 };
+        });
+
+        res.json(hourly);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+// GET /api/dashboard/analytics/customers
+router.get('/analytics/customers', authMiddleware, requireRole('cafeOwner'), (req, res) => {
+    try {
+        const cafeId = req.user.cafeId;
+
+        const segments = db.prepare(
+            `SELECT u.role, COUNT(DISTINCT o.user_id) AS customerCount, COUNT(o.id) AS orderCount,
+                    COALESCE(SUM(o.total_amount), 0) AS totalSpent
+             FROM orders o
+             JOIN users u ON u.id = o.user_id
+             WHERE o.cafe_id = ? AND o.status != 'cancelled'
+             GROUP BY u.role`
+        ).all(cafeId);
+
+        res.json(segments);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Sunucu hatası' });

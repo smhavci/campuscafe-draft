@@ -82,7 +82,7 @@
 
     <div class="products-grid">
       @for (product of filteredProducts(); track product.id) {
-      <app-product-card [product]="product" (addToCart)="onAddToCart($event)" />
+      <app-product-card [product]="product" (addToCart)="onAddToCart($event)" (explore)="openProductDetail($event)" />
       }
     </div>
 
@@ -93,6 +93,10 @@
     }
   </div>
 </div>
+}
+
+@if (selectedProduct()) {
+  <app-product-detail [product]="selectedProduct()!" (close)="closeProductDetail()" (confirm)="onProductDetailConfirm($event)" />
 }
 
 <!-- ─────────────────────────────────────────────────────────

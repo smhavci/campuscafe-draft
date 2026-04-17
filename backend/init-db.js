@@ -13,6 +13,7 @@ db.exec(`
     password_hash TEXT NOT NULL,
     role TEXT DEFAULT 'student',
     cafe_id INTEGER REFERENCES cafes(id),
+    stars INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -33,6 +34,8 @@ db.exec(`
     rating REAL DEFAULT 0,
     open_hours TEXT,
     location TEXT,
+    latitude REAL,
+    longitude REAL,
     color TEXT DEFAULT '#c8a97e'
   );
 
@@ -44,7 +47,21 @@ db.exec(`
     price REAL NOT NULL,
     description TEXT,
     image TEXT,
-    is_available INTEGER DEFAULT 1
+    is_available INTEGER DEFAULT 1,
+    calories INTEGER DEFAULT 0,
+    allergens TEXT DEFAULT '',
+    ingredients TEXT DEFAULT '',
+    star_cost INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS saved_drinks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    name TEXT NOT NULL,
+    selected_options TEXT DEFAULT '[]',
+    total_price REAL NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS campaigns (
@@ -58,6 +75,7 @@ db.exec(`
     image TEXT,
     related_product_ids TEXT DEFAULT '',
     target_role TEXT DEFAULT 'all',
+    star_multiplier INTEGER DEFAULT 1,
     is_active INTEGER DEFAULT 1
   );
 
@@ -67,8 +85,17 @@ db.exec(`
     cafe_id INTEGER REFERENCES cafes(id),
     status TEXT DEFAULT 'preparing',
     total_amount REAL NOT NULL,
+    pickup_time DATETIME,
+    payment_method TEXT DEFAULT 'credit_card',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS order_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+    status TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS order_items (
@@ -83,6 +110,40 @@ db.exec(`
     cancel_reason TEXT DEFAULT ''
   );
 
+  CREATE TABLE IF NOT EXISTS order_item_options (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_item_id INTEGER REFERENCES order_items(id) ON DELETE CASCADE,
+    option_item_id INTEGER REFERENCES product_option_items(id),
+    name TEXT,
+    price REAL
+  );
+
+  CREATE TABLE IF NOT EXISTS user_wallets (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id),
+    balance REAL DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS product_options (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    type TEXT DEFAULT 'radio',
+    is_required INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS product_option_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    option_id INTEGER REFERENCES product_options(id),
+    name TEXT NOT NULL,
+    extra_price REAL DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS product_to_options (
+    product_id INTEGER REFERENCES products(id),
+    option_id INTEGER REFERENCES product_options(id),
+    PRIMARY KEY (product_id, option_id)
+  );
+
   CREATE TABLE IF NOT EXISTS loyalty_cards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id),
@@ -90,6 +151,25 @@ db.exec(`
     stamps INTEGER DEFAULT 0,
     total_redeemed INTEGER DEFAULT 0,
     UNIQUE(user_id, cafe_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, product_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    order_id INTEGER NOT NULL REFERENCES orders(id),
+    rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
+    comment TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, product_id, order_id)
   );
 `);
 
@@ -112,59 +192,60 @@ insertCategory.run('bakery', 'Fırın Ürünleri', '🥐', 'Taze fırın ürünl
 console.log('✅ Categories seeded');
 
 // ── Cafes ──────────────────────────────────────────────
-const insertCafe = db.prepare('INSERT INTO cafes (id, name, slug, description, image, rating, open_hours, location, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-insertCafe.run(1, 'Kalamış Kahvecisi', 'kalamis-kahvecisi', 'Akdeniz Üniversitesi\'nin en sevilen kahve durağı. Geleneksel Türk kahvesi ve modern espresso çeşitleriyle kampüsün kalbi.', 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600', 4.8, '08:00 - 22:00', 'Merkez Kampüs, A Blok Yanı', '#c8a97e');
-insertCafe.run(2, 'Sokak Kahvecisi', 'sokak-kahvecisi', 'Sokak lezzetleriyle harmanlanmış kahve deneyimi. Öğrenci dostu fiyatlarıyla kampüsün vazgeçilmezi.', 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600', 4.6, '07:30 - 21:00', 'Merkez Kampüs, Kütüphane Karşısı', '#e07a5f');
-insertCafe.run(3, 'Smooth Coffee', 'smooth-coffee', 'Modern ve minimal tasarımıyla öne çıkan Smooth Coffee, özel harman kahveleri ve smoothie\'leriyle fark yaratıyor.', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600', 4.7, '08:30 - 22:30', 'Merkez Kampüs, Mühendislik Fakültesi', '#81b29a');
-insertCafe.run(4, 'Break Simit Fırını', 'break-simit-firini', 'Akdeniz Üniversitesi çarşısının vazgeçilmez lezzet durağı. Taze simit, poğaça, börek ve açma ile güne enerjik başla.', 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600', 4.5, '06:30 - 20:00', 'Kampüs Çarşısı', '#d4a574');
+const insertCafe = db.prepare('INSERT INTO cafes (id, name, slug, description, image, rating, open_hours, location, latitude, longitude, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+insertCafe.run(1, 'Kalamış Kahvecisi', 'kalamis-kahvecisi', 'Akdeniz Üniversitesi\'nin en sevilen kahve durağı. Geleneksel Türk kahvesi ve modern espresso çeşitleriyle kampüsün kalbi.', 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600', 4.8, '08:00 - 22:00', 'Merkez Kampüs, A Blok Yanı', 36.8969, 30.6386, '#c8a97e');
+insertCafe.run(2, 'Sokak Kahvecisi', 'sokak-kahvecisi', 'Sokak lezzetleriyle harmanlanmış kahve deneyimi. Öğrenci dostu fiyatlarıyla kampüsün vazgeçilmezi.', 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600', 4.6, '07:30 - 21:00', 'Merkez Kampüs, Kütüphane Karşısı', 36.8975, 30.6370, '#e07a5f');
+insertCafe.run(3, 'Smooth Coffee', 'smooth-coffee', 'Modern ve minimal tasarımıyla öne çıkan Smooth Coffee, özel harman kahveleri ve smoothie\'leriyle fark yaratıyor.', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600', 4.7, '08:30 - 22:30', 'Merkez Kampüs, Mühendislik Fakültesi', 36.8982, 30.6398, '#81b29a');
+insertCafe.run(4, 'Break Simit Fırını', 'break-simit-firini', 'Akdeniz Üniversitesi çarşısının vazgeçilmez lezzet durağı. Taze simit, poğaça, börek ve açma ile güne enerjik başla.', 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600', 4.5, '06:30 - 20:00', 'Kampüs Çarşısı', 36.8960, 30.6405, '#d4a574');
 console.log('✅ Cafes seeded');
 
-// ── Products ───────────────────────────────────────────
-const insertProduct = db.prepare('INSERT INTO products (id, cafe_id, name, category, price, description, image) VALUES (?, ?, ?, ?, ?, ?, ?)');
+// ── Products (Besin bilgileri dahil) ──────────────────
+const insertProduct = db.prepare('INSERT INTO products (id, cafe_id, name, category, price, description, image, calories, allergens, ingredients, star_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 
 // Kalamış Kahvecisi (café 1)
-insertProduct.run(101, 1, 'Türk Kahvesi', 'coffee', 30, 'Geleneksel ince öğütülmüş, cezve ile pişirilmiş otantik Türk kahvesi.', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400');
-insertProduct.run(102, 1, 'Caffè Latte', 'coffee', 48, 'Özel harman espresso ve buharla ısıtılmış süt.', 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=400');
-insertProduct.run(103, 1, 'Cappuccino', 'coffee', 45, 'Espresso, sıcak süt ve yoğun süt köpüğü üçlüsü.', 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400');
-insertProduct.run(104, 1, 'Mocha', 'coffee', 52, 'Çikolata ve espresso birleşimi, üstü krema.', 'https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=400');
-insertProduct.run(105, 1, 'Soğuk Kahve', 'cold drinks', 40, 'Buz üzerinde servis edilen özel soğuk demleme kahve.', 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400');
-insertProduct.run(106, 1, 'Limonata', 'cold drinks', 28, 'Taze sıkılmış limon ve nane ile serinletici içecek.', 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400');
-insertProduct.run(107, 1, 'Cheesecake', 'dessert', 60, 'New York usulü kremsi cheesecake, meyveli sos eşliğinde.', 'https://images.unsplash.com/photo-1524351199678-941a58a3df50?w=400');
-insertProduct.run(108, 1, 'Brownie', 'dessert', 42, 'Fudgy çikolatalı brownie, ceviz parçacıklı.', 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400');
+insertProduct.run(101, 1, 'Türk Kahvesi', 'coffee', 30, 'Geleneksel ince öğütülmüş, cezve ile pişirilmiş otantik Türk kahvesi.', 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400', 5, '', 'Türk kahvesi çekirdeği, su', 15);
+insertProduct.run(102, 1, 'Caffè Latte', 'coffee', 48, 'Özel harman espresso ve buharla ısıtılmış süt.', 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=400', 190, 'süt', 'Espresso, süt', 15);
+insertProduct.run(103, 1, 'Cappuccino', 'coffee', 45, 'Espresso, sıcak süt ve yoğun süt köpüğü üçlüsü.', 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400', 120, 'süt', 'Espresso, süt, süt köpüğü', 15);
+insertProduct.run(104, 1, 'Mocha', 'coffee', 52, 'Çikolata ve espresso birleşimi, üstü krema.', 'https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=400', 360, 'süt', 'Espresso, süt, çikolata sosu, krema', 15);
+insertProduct.run(105, 1, 'Soğuk Kahve', 'cold drinks', 40, 'Buz üzerinde servis edilen özel soğuk demleme kahve.', 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400', 15, '', 'Soğuk demleme kahve, buz', 15);
+insertProduct.run(106, 1, 'Limonata', 'cold drinks', 28, 'Taze sıkılmış limon ve nane ile serinletici içecek.', 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400', 120, '', 'Limon suyu, şeker, nane, su', 20);
+insertProduct.run(107, 1, 'Cheesecake', 'dessert', 60, 'New York usulü kremsi cheesecake, meyveli sos eşliğinde.', 'https://images.unsplash.com/photo-1524351199678-941a58a3df50?w=400', 450, 'süt,gluten,yumurta', 'Krem peynir, bisküvi tabanı, şeker, yumurta, tereyağı', 30);
+insertProduct.run(108, 1, 'Brownie', 'dessert', 42, 'Fudgy çikolatalı brownie, ceviz parçacıklı.', 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400', 380, 'süt,gluten,yumurta,fındık', 'Çikolata, tereyağı, un, yumurta, ceviz', 25);
 
 // Sokak Kahvecisi (café 2)
-insertProduct.run(201, 2, 'Filtre Kahve', 'coffee', 25, 'Günlük taze çekilmiş çekirdeklerle hazırlanan filtre kahve.', 'https://images.unsplash.com/photo-1551030173-122aabc4489c?w=400');
-insertProduct.run(202, 2, 'Americano', 'coffee', 32, 'Çift shot espresso ve sıcak su, sade ve güçlü.', 'https://images.unsplash.com/photo-1521302200778-33500795e128?w=400');
-insertProduct.run(203, 2, 'Latte Macchiato', 'coffee', 40, 'Katmanlı süt ve espresso, göz alıcı sunum.', 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=400');
-insertProduct.run(204, 2, 'Sıcak Çikolata', 'coffee', 38, 'Gerçek çikolatadan yapılmış, marshmallow\'lu sıcak çikolata.', 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=400');
-insertProduct.run(205, 2, 'Ice Tea', 'cold drinks', 22, 'Ev yapımı şeftalili soğuk çay, buz gibi.', 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400');
-insertProduct.run(206, 2, 'Ayran', 'cold drinks', 15, 'Geleneksel köy ayranı, taze ve köpüklü.', 'https://images.unsplash.com/photo-1584949602334-4e99f98286a8?w=400');
-insertProduct.run(207, 2, 'Waffle', 'dessert', 55, 'Çikolata sos ve meyve eşliğinde sıcak waffle.', 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=400');
-insertProduct.run(208, 2, 'Kurabiye', 'dessert', 18, 'Taze fırından çıkmış ev yapımı kurabiye.', 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400');
-insertProduct.run(209, 2, 'Tost', 'food', 35, 'Kaşarlı ve domatesli ızgara tost, kampüsün klasiği.', 'https://images.unsplash.com/photo-1528736235302-52922df5c122?w=400');
+insertProduct.run(201, 2, 'Filtre Kahve', 'coffee', 25, 'Günlük taze çekilmiş çekirdeklerle hazırlanan filtre kahve.', 'https://images.unsplash.com/photo-1551030173-122aabc4489c?w=400', 5, '', 'Filtre kahve çekirdeği, su', 15);
+insertProduct.run(202, 2, 'Americano', 'coffee', 32, 'Çift shot espresso ve sıcak su, sade ve güçlü.', 'https://images.unsplash.com/photo-1521302200778-33500795e128?w=400', 10, '', 'Espresso, sıcak su', 15);
+insertProduct.run(203, 2, 'Latte Macchiato', 'coffee', 40, 'Katmanlı süt ve espresso, göz alıcı sunum.', 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=400', 200, 'süt', 'Süt, espresso', 15);
+insertProduct.run(204, 2, 'Sıcak Çikolata', 'coffee', 38, 'Gerçek çikolatadan yapılmış, marshmallow\'lu sıcak çikolata.', 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=400', 380, 'süt', 'Süt, çikolata, marshmallow', 15);
+insertProduct.run(205, 2, 'Ice Tea', 'cold drinks', 22, 'Ev yapımı şeftalili soğuk çay, buz gibi.', 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400', 90, '', 'Siyah çay, şeftali suyu, şeker, buz', 15);
+insertProduct.run(206, 2, 'Ayran', 'cold drinks', 15, 'Geleneksel köy ayranı, taze ve köpüklü.', 'https://images.unsplash.com/photo-1584949602334-4e99f98286a8?w=400', 60, 'süt', 'Yoğurt, su, tuz', 10);
+insertProduct.run(207, 2, 'Waffle', 'dessert', 55, 'Çikolata sos ve meyve eşliğinde sıcak waffle.', 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=400', 520, 'süt,gluten,yumurta', 'Un, yumurta, süt, tereyağı, çikolata sosu', 30);
+insertProduct.run(208, 2, 'Kurabiye', 'dessert', 18, 'Taze fırından çıkmış ev yapımı kurabiye.', 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400', 180, 'süt,gluten,yumurta', 'Un, tereyağı, şeker, yumurta', 12);
+insertProduct.run(209, 2, 'Tost', 'food', 35, 'Kaşarlı ve domatesli ızgara tost, kampüsün klasiği.', 'https://images.unsplash.com/photo-1528736235302-52922df5c122?w=400', 320, 'süt,gluten', 'Tost ekmeği, kaşar peyniri, domates', 20);
 
 // Smooth Coffee (café 3)
-insertProduct.run(301, 3, 'Flat White', 'coffee', 50, 'Velvety mikroköpük ve çift shot espresso, pürüzsüz.', 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?w=400');
-insertProduct.run(302, 3, 'V60 Pour Over', 'coffee', 55, 'El yapımı V60 demleme, single origin çekirdek.', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400');
-insertProduct.run(303, 3, 'Espresso', 'coffee', 28, 'Tek shot, yoğun ve aromatik espresso.', 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400');
-insertProduct.run(304, 3, 'Matcha Latte', 'coffee', 52, 'Premium Japon matcha tozu ve kremalı sütle.', 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=400');
-insertProduct.run(305, 3, 'Mango Smoothie', 'cold drinks', 45, 'Taze mango, muz ve yoğurt ile hazırlanan smoothie.', 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=400');
-insertProduct.run(306, 3, 'Açaí Bowl', 'cold drinks', 65, 'Açaí, granola, taze meyve ve bal eşliğinde.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400');
-insertProduct.run(307, 3, 'Berry Smoothie', 'cold drinks', 42, 'Karışık orman meyveleri ve yoğurt smoothie\'si.', 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=400');
-insertProduct.run(308, 3, 'Tiramisu', 'dessert', 62, 'İtalyan usulü mascarpone ve espresso ile hazırlanmış tiramisu.', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400');
-insertProduct.run(309, 3, 'Energy Ball', 'dessert', 20, 'Hurma, yulaf ve kakao ile yapılmış sağlıklı atıştırmalık.', 'https://images.unsplash.com/photo-1604152135912-04a022e23696?w=400');
+insertProduct.run(301, 3, 'Flat White', 'coffee', 50, 'Velvety mikroköpük ve çift shot espresso, pürüzsüz.', 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?w=400', 170, 'süt', 'Çift espresso, mikroköpük süt', 15);
+insertProduct.run(302, 3, 'V60 Pour Over', 'coffee', 55, 'El yapımı V60 demleme, single origin çekirdek.', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400', 5, '', 'Single origin kahve çekirdeği, su', 20);
+insertProduct.run(303, 3, 'Espresso', 'coffee', 28, 'Tek shot, yoğun ve aromatik espresso.', 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400', 5, '', 'Espresso çekirdeği', 10);
+insertProduct.run(304, 3, 'Matcha Latte', 'coffee', 52, 'Premium Japon matcha tozu ve kremalı sütle.', 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=400', 240, 'süt', 'Matcha tozu, süt, şeker', 15);
+insertProduct.run(305, 3, 'Mango Smoothie', 'cold drinks', 45, 'Taze mango, muz ve yoğurt ile hazırlanan smoothie.', 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=400', 280, 'süt', 'Mango, muz, yoğurt, bal', 20);
+insertProduct.run(306, 3, 'Açaí Bowl', 'cold drinks', 65, 'Açaí, granola, taze meyve ve bal eşliğinde.', 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400', 340, 'süt,gluten,fındık', 'Açaí püresi, granola, muz, çilek, bal', 30);
+insertProduct.run(307, 3, 'Berry Smoothie', 'cold drinks', 42, 'Karışık orman meyveleri ve yoğurt smoothie\'si.', 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=400', 220, 'süt', 'Böğürtlen, ahududu, yaban mersini, yoğurt', 20);
+insertProduct.run(308, 3, 'Tiramisu', 'dessert', 62, 'İtalyan usulü mascarpone ve espresso ile hazırlanmış tiramisu.', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400', 420, 'süt,gluten,yumurta', 'Mascarpone, espresso, savoiardi, kakao', 30);
+insertProduct.run(309, 3, 'Energy Ball', 'dessert', 20, 'Hurma, yulaf ve kakao ile yapılmış sağlıklı atıştırmalık.', 'https://images.unsplash.com/photo-1604152135912-04a022e23696?w=400', 95, 'fındık', 'Hurma, yulaf, kakao, hindistancevizi, fıstık ezmesi', 12);
 
-// Break Simit Fırını (café 4) — fırın ürünleri, içecek yok
-insertProduct.run(401, 4, 'Simit', 'bakery', 12, 'Susamlı, çıtır çıtır, taze fırından çıkmış geleneksel simit.', 'https://images.unsplash.com/photo-1593085260707-5377ba37f868?w=400');
-insertProduct.run(402, 4, 'Peynirli Poğaça', 'bakery', 18, 'İçi bol beyaz peynirli, yumuşacık taze poğaça.', 'https://images.unsplash.com/photo-1530610476181-d83430b64dcd?w=400');
-insertProduct.run(403, 4, 'Zeytinli Poğaça', 'bakery', 18, 'Kıyılmış siyah zeytin ile hazırlamış nefis poğaça.', 'https://images.unsplash.com/photo-1555507036-ab1f4038024a?w=400');
-insertProduct.run(404, 4, 'Ispanaklı Börek', 'bakery', 25, 'El açması yufka ile hazırlanmış ıspanaklı börek.', 'https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=400');
-insertProduct.run(405, 4, 'Kıymalı Börek', 'bakery', 28, 'Kıymalı, soğanlı, baharatlı geleneksel börek.', 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=400');
-insertProduct.run(406, 4, 'Açma', 'bakery', 10, 'Yumuşacık, tereyağlı taze açma.', 'https://images.unsplash.com/photo-1549931319-a545753467c8?w=400');
-insertProduct.run(407, 4, 'Kaşarlı Tost', 'food', 30, 'Bol kaşarlı, ızgara tost. Yanında turşu ile servis edilir.', 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400');
-insertProduct.run(408, 4, 'Sucuklu Tost', 'food', 35, 'Kaşar ve sucuk ile hazırlanan doyurucu tost.', 'https://images.unsplash.com/photo-1475090169767-40ed8d18f67d?w=400');
-insertProduct.run(409, 4, 'Çay', 'food', 8, 'Demlik çay, Rize\'nin en iyisi. İnce belli bardakta servis edilir.', 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=400');
+// Break Simit Fırını (café 4)
+insertProduct.run(401, 4, 'Simit', 'bakery', 12, 'Susamlı, çıtır çıtır, taze fırından çıkmış geleneksel simit.', 'https://images.unsplash.com/photo-1593085260707-5377ba37f868?w=400', 280, 'gluten,susam', 'Un, su, maya, pekmez, susam', 10);
+insertProduct.run(402, 4, 'Peynirli Poğaça', 'bakery', 18, 'İçi bol beyaz peynirli, yumuşacık taze poğaça.', 'https://images.unsplash.com/photo-1530610476181-d83430b64dcd?w=400', 320, 'süt,gluten,yumurta', 'Un, tereyağı, yoğurt, beyaz peynir, yumurta', 12);
+insertProduct.run(403, 4, 'Zeytinli Poğaça', 'bakery', 18, 'Kıyılmış siyah zeytin ile hazırlamış nefis poğaça.', 'https://images.unsplash.com/photo-1555507036-ab1f4038024a?w=400', 310, 'gluten,yumurta', 'Un, tereyağı, yoğurt, siyah zeytin, yumurta', 12);
+insertProduct.run(404, 4, 'Ispanaklı Börek', 'bakery', 25, 'El açması yufka ile hazırlanmış ıspanaklı börek.', 'https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=400', 290, 'süt,gluten,yumurta', 'Yufka, ıspanak, beyaz peynir, yumurta, zeytinyağı', 18);
+insertProduct.run(405, 4, 'Kıymalı Börek', 'bakery', 28, 'Kıymalı, soğanlı, baharatlı geleneksel börek.', 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=400', 350, 'gluten,yumurta', 'Yufka, kıyma, soğan, baharat, yumurta', 20);
+insertProduct.run(406, 4, 'Açma', 'bakery', 10, 'Yumuşacık, tereyağlı taze açma.', 'https://images.unsplash.com/photo-1549931319-a545753467c8?w=400', 230, 'süt,gluten,yumurta', 'Un, tereyağı, süt, yumurta, maya', 10);
+insertProduct.run(407, 4, 'Kaşarlı Tost', 'food', 30, 'Bol kaşarlı, ızgara tost. Yanında turşu ile servis edilir.', 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400', 380, 'süt,gluten', 'Tost ekmeği, kaşar peyniri, turşu', 25);
+insertProduct.run(408, 4, 'Sucuklu Tost', 'food', 35, 'Kaşar ve sucuk ile hazırlanan doyurucu tost.', 'https://images.unsplash.com/photo-1475090169767-40ed8d18f67d?w=400', 450, 'süt,gluten', 'Tost ekmeği, sucuk, kaşar peyniri', 30);
+insertProduct.run(409, 4, 'Çay', 'food', 8, 'Demlik çay, Rize\'nin en iyisi. İnce belli bardakta servis edilir.', 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=400', 0, '', 'Rize çayı, su', 5);
 console.log('✅ Products seeded');
+
 
 // ── Campaigns (her biri bir kafeye bağlı, ilişkili ürün ID'leri) ─────
 const insertCampaign = db.prepare('INSERT INTO campaigns (cafe_id, title, description, discount, badge, valid_until, image, related_product_ids, target_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -190,24 +271,69 @@ insertCampaign.run(4, 'Börek Saati 🕐', 'Her gün 14:00-16:00 arası tüm bö
 
 console.log('✅ Campaigns seeded');
 
-// ── Demo Users ─────────────────────────────────────────
+// ── Ürün Kişiselleştirme Seçenekleri (Starbucks Mantığı) ────────
+const insertOption = db.prepare('INSERT INTO product_options (id, name, type, is_required) VALUES (?, ?, ?, ?)');
+insertOption.run(1, 'Süt Seçimi', 'radio', 1);       // Zorunlu: 1 tane seçilmeli
+insertOption.run(2, 'Şurup Ekle', 'checkbox', 0);     // Opsiyonel: birden fazla seçilebilir
+insertOption.run(3, 'Ekstra Shot', 'checkbox', 0);     // Opsiyonel
+insertOption.run(4, 'Boyut', 'radio', 1);              // Zorunlu: 1 tane seçilmeli
+
+const insertOptionItem = db.prepare('INSERT INTO product_option_items (option_id, name, extra_price) VALUES (?, ?, ?)');
+// Süt Seçimi
+insertOptionItem.run(1, 'Normal Süt', 0);
+insertOptionItem.run(1, 'Yağsız Süt', 0);
+insertOptionItem.run(1, 'Yulaf Sütü', 5);
+insertOptionItem.run(1, 'Badem Sütü', 7);
+// Şurup Ekle
+insertOptionItem.run(2, 'Vanilya Şurubu', 5);
+insertOptionItem.run(2, 'Karamel Şurubu', 5);
+insertOptionItem.run(2, 'Fındık Şurubu', 5);
+insertOptionItem.run(2, 'Çikolata Sosu', 5);
+// Ekstra Shot
+insertOptionItem.run(3, 'Ekstra Espresso Shot', 8);
+insertOptionItem.run(3, 'Çift Shot', 15);
+// Boyut
+insertOptionItem.run(4, 'Küçük (Small)', 0);
+insertOptionItem.run(4, 'Orta (Medium)', 5);
+insertOptionItem.run(4, 'Büyük (Large)', 10);
+
+// Espresso bazlı kahveleri kişiselleştirme seçeneklerine bağla
+const linkOption = db.prepare('INSERT INTO product_to_options (product_id, option_id) VALUES (?, ?)');
+
+// Kalamış: Latte(102), Cappuccino(103), Mocha(104), Soğuk Kahve(105)
+[102, 103, 104, 105].forEach(pid => { linkOption.run(pid, 1); linkOption.run(pid, 2); linkOption.run(pid, 3); linkOption.run(pid, 4); });
+// Kalamış: Türk Kahvesi(101) — sadece boyut
+linkOption.run(101, 4);
+
+// Sokak: Filtre(201), Americano(202), Latte Macchiato(203), Sıcak Çikolata(204)
+[201, 202, 203, 204].forEach(pid => { linkOption.run(pid, 1); linkOption.run(pid, 2); linkOption.run(pid, 3); linkOption.run(pid, 4); });
+
+// Smooth: Flat White(301), V60(302), Espresso(303), Matcha Latte(304)
+[301, 302, 303, 304].forEach(pid => { linkOption.run(pid, 1); linkOption.run(pid, 2); linkOption.run(pid, 3); linkOption.run(pid, 4); });
+// Smooth: Smoothie'ler — sadece boyut
+[305, 306, 307].forEach(pid => { linkOption.run(pid, 4); });
+
+console.log('✅ Ürün kişiselleştirme seçenekleri eklendi');
+
+// ── Cüzdan & Sadakat Kartı ─────────────────────────────
+
 const bcrypt = require('bcrypt');
 const salt = bcrypt.genSaltSync(10);
 const demoPassword = bcrypt.hashSync('test123', salt);
 
 const insertUser = db.prepare(
-  'INSERT INTO users (first_name, last_name, student_number, email, password_hash, role, cafe_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  'INSERT INTO users (first_name, last_name, student_number, email, password_hash, role, cafe_id, stars) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
 );
 
 // Student
-insertUser.run('Demo', 'Öğrenci', '20230505001', null, demoPassword, 'student', null);
+insertUser.run('Demo', 'Öğrenci', '20230505001', null, demoPassword, 'student', null, 42);
 // Teacher
-insertUser.run('Ahmet', 'Hoca', null, 'hoca@akdeniz.edu.tr', demoPassword, 'teacher', null);
+insertUser.run('Ahmet', 'Hoca', null, 'hoca@akdeniz.edu.tr', demoPassword, 'teacher', null, 10);
 // Cafe Owners (one per cafe)
-insertUser.run('Kalamış', 'Yönetici', null, 'kalamis@cafe.com', demoPassword, 'cafeOwner', 1);
-insertUser.run('Sokak', 'Yönetici', null, 'sokak@cafe.com', demoPassword, 'cafeOwner', 2);
-insertUser.run('Smooth', 'Yönetici', null, 'smooth@cafe.com', demoPassword, 'cafeOwner', 3);
-insertUser.run('Break', 'Yönetici', null, 'break@cafe.com', demoPassword, 'cafeOwner', 4);
+insertUser.run('Kalamış', 'Yönetici', null, 'kalamis@cafe.com', demoPassword, 'cafeOwner', 1, 0);
+insertUser.run('Sokak', 'Yönetici', null, 'sokak@cafe.com', demoPassword, 'cafeOwner', 2, 0);
+insertUser.run('Smooth', 'Yönetici', null, 'smooth@cafe.com', demoPassword, 'cafeOwner', 3, 0);
+insertUser.run('Break', 'Yönetici', null, 'break@cafe.com', demoPassword, 'cafeOwner', 4, 0);
 
 console.log('✅ Demo users seeded');
 

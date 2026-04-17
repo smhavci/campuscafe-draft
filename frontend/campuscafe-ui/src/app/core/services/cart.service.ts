@@ -1,21 +1,20 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { Product } from './product.service';
+import { Product, ProductOptionItem } from './product.service';
 
 export interface CartItem {
+    id: string; // Unique ID for the item entry in cart (productId + options hash)
     product: Product;
     quantity: number;
     note: string;
     discount: number;
     campaignTitle: string;
+    selectedOptions: ProductOptionItem[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
     private cartItems = signal<CartItem[]>([]);
 
-    // Sepetteki ürünlerin hangi kafeye ait olduğunu tutar.
-    // İlk ürün eklenince set edilir, sepet temizlenince null olur.
-    // Farklı kafeden ürün eklenmeye çalışılınca bunu kontrol ederiz.
     private lockedCafeId = signal<number | null>(null);
     private lockedCafeName = signal<string>('');
 
@@ -27,13 +26,24 @@ export class CartService {
         this.cartItems().reduce((sum, item) => sum + item.quantity, 0)
     );
 
+    // Calculates base price + option extra prices
+    private getItemUnitPrice(item: CartItem): number {
+        const basePrice = item.product.price;
+        const extraPrice = item.selectedOptions.reduce((sum, opt) => sum + opt.extraPrice, 0);
+        return basePrice + extraPrice;
+    }
+
     readonly subtotalPrice = computed(() =>
-        this.cartItems().reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+        this.cartItems().reduce((sum, item) => {
+            const unitPrice = this.getItemUnitPrice(item);
+            return sum + unitPrice * item.quantity;
+        }, 0)
     );
 
     readonly discountAmount = computed(() =>
         this.cartItems().reduce((sum, item) => {
-            const discountPerUnit = item.product.price * (item.discount / 100);
+            const unitPrice = this.getItemUnitPrice(item);
+            const discountPerUnit = unitPrice * (item.discount / 100);
             return sum + discountPerUnit * item.quantity;
         }, 0)
     );
@@ -42,41 +52,32 @@ export class CartService {
         this.subtotalPrice() - this.discountAmount()
     );
 
-    // ─────────────────────────────────────────────────────────
-    // addToCart() — Ürünü sepete ekler.
-    //
-    // Dönüş değeri:
-    //   'added'        → başarıyla eklendi
-    //   'conflict'     → farklı kafe, kullanıcıya sor
-    //
-    // Neden boolean değil string döndürüyoruz?
-    // İleride başka durumlar eklenebilir (ör: stok yok).
-    // String daha açıklayıcı ve genişletilebilir.
-    // ─────────────────────────────────────────────────────────
     addToCart(
         product: Product,
+        options: ProductOptionItem[] = [],
         discount = 0,
         campaignTitle = '',
         cafeName = ''
     ): 'added' | 'conflict' {
         const cafeId = (product as any).cafeId as number;
 
-        // Sepet doluysa ve farklı kafe geliyorsa — çakışma var
         if (this.cartItems().length > 0 && this.lockedCafeId() !== cafeId) {
             return 'conflict';
         }
 
-        // Sepet boşsa veya aynı kafeyse — kilidi set et
         if (this.cartItems().length === 0) {
             this.lockedCafeId.set(cafeId);
             this.lockedCafeName.set(cafeName);
         }
 
+        // Create a unique key based on productId and options IDs to distinguish items
+        const optionsKey = options.map(o => o.id).sort().join('-');
+        const cartItemId = `${product.id}_${optionsKey}`;
+
         const currentItems = this.cartItems();
-        const existingIndex = currentItems.findIndex(item => item.product.id === product.id);
+        const existingIndex = currentItems.findIndex(item => item.id === cartItemId);
 
         if (existingIndex >= 0) {
-            // Ürün zaten sepette — miktarı artır
             const updated = [...currentItems];
             updated[existingIndex] = {
                 ...updated[existingIndex],
@@ -86,46 +87,51 @@ export class CartService {
             };
             this.cartItems.set(updated);
         } else {
-            // Yeni ürün ekle
             this.cartItems.set([
                 ...currentItems,
-                { product, quantity: 1, note: '', discount, campaignTitle }
+                { 
+                    id: cartItemId,
+                    product, 
+                    quantity: 1, 
+                    note: '', 
+                    discount, 
+                    campaignTitle,
+                    selectedOptions: options
+                }
             ]);
         }
 
         return 'added';
     }
 
-    removeFromCart(productId: number): void {
-        const updated = this.cartItems().filter(item => item.product.id !== productId);
+    removeFromCart(cartItemId: string): void {
+        const updated = this.cartItems().filter(item => item.id !== cartItemId);
         this.cartItems.set(updated);
 
-        // Sepet boşaldıysa kilidi kaldır
         if (updated.length === 0) {
             this.lockedCafeId.set(null);
             this.lockedCafeName.set('');
         }
     }
 
-    updateQuantity(productId: number, quantity: number): void {
+    updateQuantity(cartItemId: string, quantity: number): void {
         if (quantity <= 0) {
-            this.removeFromCart(productId);
+            this.removeFromCart(cartItemId);
             return;
         }
         const updated = this.cartItems().map(item =>
-            item.product.id === productId ? { ...item, quantity } : item
+            item.id === cartItemId ? { ...item, quantity } : item
         );
         this.cartItems.set(updated);
     }
 
-    updateNote(productId: number, note: string): void {
+    updateNote(cartItemId: string, note: string): void {
         const updated = this.cartItems().map(item =>
-            item.product.id === productId ? { ...item, note } : item
+            item.id === cartItemId ? { ...item, note } : item
         );
         this.cartItems.set(updated);
     }
 
-    // Sepeti tamamen temizle ve kilidi sıfırla
     clearCart(): void {
         this.cartItems.set([]);
         this.lockedCafeId.set(null);

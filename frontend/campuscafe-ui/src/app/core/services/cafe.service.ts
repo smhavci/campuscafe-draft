@@ -13,6 +13,8 @@ export interface Cafe {
     rating: number;
     openHours: string;
     location: string;
+    latitude?: number;
+    longitude?: number;
     color: string;
 }
 

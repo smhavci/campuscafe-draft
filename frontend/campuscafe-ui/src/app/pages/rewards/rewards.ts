@@ -1,17 +1,20 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LoyaltyService, LoyaltyCard, CoffeeOption } from '../../core/services/loyalty.service';
+import { LoyaltyService, LoyaltyCard, CoffeeOption, LoyaltyStatus, StarHistory } from '../../core/services/loyalty.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
     selector: 'app-rewards',
     standalone: true,
-    imports: [RouterLink],
+    imports: [RouterLink, CommonModule, DatePipe],
     templateUrl: './rewards.html',
     styleUrl: './rewards.css'
 })
 export class Rewards implements OnInit {
     cards = signal<LoyaltyCard[]>([]);
+    starStatus = signal<LoyaltyStatus | null>(null);
+    starHistory = signal<StarHistory[]>([]);
     loading = signal(true);
     redeemMsg = signal('');
     redeemError = signal('');
@@ -30,20 +33,20 @@ export class Rewards implements OnInit {
 
     ngOnInit(): void {
         if (this.authService.isLoggedIn()) {
-            this.loadCards();
+            this.loadLoyaltyData();
         } else {
             this.loading.set(false);
         }
     }
 
-    loadCards(): void {
-        this.loyaltyService.getCards().subscribe({
-            next: cards => {
-                this.cards.set(cards);
-                this.loading.set(false);
-            },
-            error: () => this.loading.set(false)
-        });
+    loadLoyaltyData(): void {
+        this.loading.set(true);
+        this.loyaltyService.getCards().subscribe(cards => this.cards.set(cards));
+        this.loyaltyService.getStatus().subscribe(status => this.starStatus.set(status));
+        this.loyaltyService.getHistory().subscribe(history => this.starHistory.set(history));
+        
+        // Wait a bit to hide loader
+        setTimeout(() => this.loading.set(false), 800);
     }
 
     getStampArray(stamps: number): boolean[] {
@@ -84,7 +87,7 @@ export class Rewards implements OnInit {
                 this.redeemLoading.set(false);
                 this.redeemMsg.set(res.message);
                 this.closePicker();
-                this.loadCards();
+                this.loadLoyaltyData();
             },
             error: err => {
                 this.redeemLoading.set(false);

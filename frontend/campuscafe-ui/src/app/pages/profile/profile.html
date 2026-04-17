@@ -18,7 +18,6 @@
   <!-- Kullanıcı özet kartı -->
   <div class="profile-card">
     <div class="avatar">
-      <!-- Baş harfler ile avatar -->
       {{ u.firstName[0] }}{{ u.lastName[0] }}
     </div>
     <div class="profile-info">
@@ -42,14 +41,57 @@
   <!-- Sekmeler -->
   <div class="sections">
     <button class="section-btn" [class.active]="activeSection() === 'info'"
-            (click)="activeSection.set('info')">
+            (click)="setSection('info')">
       ✏️ Bilgileri Düzenle
     </button>
     <button class="section-btn" [class.active]="activeSection() === 'password'"
-            (click)="activeSection.set('password')">
+            (click)="setSection('password')">
       🔒 Şifre Değiştir
     </button>
+    <button class="section-btn" [class.active]="activeSection() === 'favorites'"
+            (click)="setSection('favorites')">
+      ❤️ Favorilerim
+    </button>
+    <button class="section-btn" [class.active]="activeSection() === 'saved_drinks'"
+            (click)="setSection('saved_drinks')">
+      ⭐ Favori İçeceklerim
+    </button>
+    <button class="section-btn" [class.active]="activeSection() === 'wallet'"
+            (click)="setSection('wallet')">
+      💰 Cüzdanım
+    </button>
   </div>
+
+  <!-- Cüzdan / Bakiye -->
+  @if (activeSection() === 'wallet') {
+  <div class="form-card wallet-card">
+    <div class="wallet-header">
+      <div class="wallet-balance-big">
+        <span class="wallet-label">Mevcut Bakiyeniz</span>
+        <h2 class="wallet-val">{{ walletService.balance() | currency:'TRY':'₺':'1.0-0' }}</h2>
+      </div>
+      <div class="wallet-illustration">⭐</div>
+    </div>
+    
+    <div class="topup-section">
+      <h3 class="form-title">Bakiye Yükle (Demo)</h3>
+      <p class="section-desc">Hızlı ödeme yapmak için cüzdanınıza bakiye ekleyin.</p>
+      
+      <div class="amount-selector">
+        <button class="amount-btn" [class.active]="topUpAmount === 20" (click)="topUpAmount = 20">₺20</button>
+        <button class="amount-btn" [class.active]="topUpAmount === 50" (click)="topUpAmount = 50">₺50</button>
+        <button class="amount-btn" [class.active]="topUpAmount === 100" (click)="topUpAmount = 100">₺100</button>
+        <button class="amount-btn" [class.active]="topUpAmount === 250" (click)="topUpAmount = 250">₺250</button>
+      </div>
+
+      <div class="form-actions">
+        <button class="save-btn" (click)="handleTopUp()" [disabled]="saving()">
+          {{ saving() ? 'Yükleniyor...' : 'Bakiye Yükle' }}
+        </button>
+      </div>
+    </div>
+  </div>
+  }
 
   <!-- Bilgi güncelleme formu -->
   @if (activeSection() === 'info') {
@@ -58,9 +100,6 @@
     <div class="form-grid">
       <div class="form-group">
         <label>Ad</label>
-        <!-- [(ngModel)] çift yönlü bağlama:
-             input değişince infoForm.firstName güncellenir,
-             infoForm.firstName değişince input güncellenir -->
         <input type="text" [(ngModel)]="infoForm.firstName" placeholder="Adınız" />
       </div>
       <div class="form-group">
@@ -70,14 +109,12 @@
       @if (u.role === 'student') {
       <div class="form-group">
         <label>Öğrenci No</label>
-        <!-- Öğrenci numarası değiştirilemez, sadece göster -->
         <input type="text" [value]="u.studentNumber" disabled class="input-disabled" />
       </div>
       }
       @if (u.email) {
       <div class="form-group">
         <label>E-posta</label>
-        <!-- E-posta da değiştirilemez -->
         <input type="text" [value]="u.email" disabled class="input-disabled" />
       </div>
       }
@@ -116,6 +153,94 @@
         {{ saving() ? 'Değiştiriliyor...' : 'Şifreyi Değiştir' }}
       </button>
     </div>
+  </div>
+  }
+
+  <!-- Favorilerim -->
+  @if (activeSection() === 'favorites') {
+  <div class="form-card">
+    <h3 class="form-title">❤️ Favori Ürünlerim</h3>
+
+    @if (favLoading()) {
+    <div class="loading-state"><p>Yükleniyor...</p></div>
+    } @else if (favorites().length === 0) {
+    <div class="empty-favorites">
+      <span class="empty-icon">🤍</span>
+      <p>Henüz favorin yok. Ürün kartlarındaki ❤️ butonuyla favori ekleyebilirsin.</p>
+    </div>
+    } @else {
+    <div class="favorites-grid">
+      @for (fav of favorites(); track fav.productId) {
+      <div class="fav-item">
+        <img [src]="fav.image" [alt]="fav.name" class="fav-image" loading="lazy" />
+        <div class="fav-body">
+          <h4 class="fav-name">{{ fav.name }}</h4>
+          <span class="fav-cafe">
+            <a [routerLink]="'/cafe/' + fav.cafeSlug">☕ {{ fav.cafeName }}</a>
+          </span>
+          <span class="fav-price">{{ fav.price | currency:'TRY':'₺':'1.0-0' }}</span>
+        </div>
+        <button class="fav-remove-btn" (click)="removeFavorite(fav.productId)" title="Favorilerden kaldır">✕</button>
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Favori İçeceklerim (Kişisel Tarifler) -->
+  @if (activeSection() === 'saved_drinks') {
+  <div class="form-card">
+    <h3 class="form-title">⭐ Favori İçeceklerim</h3>
+    <p class="section-desc">Kişiselleştirdiğin ve kaydettiğin sana özel kahve tarifleri.</p>
+
+    @if (favLoading()) {
+    <div class="loading-state"><p>Yükleniyor...</p></div>
+    } @else if (savedDrinks().length === 0) {
+    <div class="empty-favorites">
+      <span class="empty-icon">☕</span>
+      <p>Henüz kayıtlı bir tarifin yok. Ürün detayındaki ⭐ butonuyla kendi tarifini kaydedebilirsin.</p>
+    </div>
+    } @else {
+    <div class="favorites-grid drinks-grid">
+      @for (drink of savedDrinks(); track drink.id) {
+      <div class="fav-item drink-item">
+        <div class="drink-image-container">
+          <img [src]="drink.productImage" [alt]="drink.name" class="fav-image" loading="lazy" />
+          <div class="drink-badge">Özel Tarif</div>
+        </div>
+        <div class="fav-body">
+          <div class="drink-header">
+            <h4 class="fav-name">{{ drink.name }}</h4>
+            <span class="drink-base-name">({{ drink.productName }})</span>
+          </div>
+          
+          <div class="drink-options">
+            @for (opt of drink.selectedOptions; track opt.id) {
+            <span class="opt-tag">{{ opt.name }}</span>
+            }
+          </div>
+
+          <div class="drink-footer">
+            <span class="fav-price">{{ drink.totalPrice | currency:'TRY':'₺':'1.0-0' }}</span>
+            <span class="fav-cafe">
+              <a [routerLink]="'/cafe/' + drink.cafeSlug">☕ {{ drink.cafeName }}</a>
+            </span>
+          </div>
+        </div>
+        
+        <div class="drink-actions">
+          <button class="order-again-btn" (click)="$event.stopPropagation(); orderSavedDrink(drink)">
+            🛒 Sepete Ekle
+          </button>
+          <button class="fav-remove-btn mini" (click)="$event.stopPropagation(); removeSavedDrink(drink.id)" title="Tarifi sil">
+            ✕
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+    }
   </div>
   }
 

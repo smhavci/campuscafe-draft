@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 import { API_BASE_URL } from '../config/api.config';
 
+export interface OrderItemOption {
+    name: string;
+    price: number;
+}
+
 export interface OrderItem {
     itemId: number;
     productName: string;
@@ -13,6 +18,7 @@ export interface OrderItem {
     lineTotal: number;
     itemStatus: string;
     cancelReason: string;
+    options?: OrderItemOption[];
 }
 
 export interface Order {
@@ -21,6 +27,8 @@ export interface Order {
     totalAmount: number;
     createdAt: string;
     cafeName: string;
+    pickupTime?: string;
+    paymentMethod?: string;
     items: OrderItem[];
 }
 
@@ -30,9 +38,24 @@ export class OrderService {
 
     constructor(private http: HttpClient, private authService: AuthService) { }
 
-    createOrder(cafeId: number, items: { productId: number; quantity: number }[]): Observable<Order> {
+    createOrder(
+        cafeId: number, 
+        items: { 
+            productId: number; 
+            quantity: number; 
+            options?: number[]; 
+            note?: string 
+        }[],
+        pickupTime?: string,
+        paymentMethod: 'credit_card' | 'wallet' | 'stars' = 'credit_card'
+    ): Observable<Order> {
         const headers = new HttpHeaders(this.authService.getAuthHeaders());
-        return this.http.post<Order>(this.apiUrl, { cafeId, items }, { headers });
+        return this.http.post<Order>(this.apiUrl, { 
+            cafeId, 
+            items, 
+            pickupTime, 
+            paymentMethod 
+        }, { headers });
     }
 
     getOrders(): Observable<Order[]> {
@@ -43,5 +66,15 @@ export class OrderService {
     getOrderById(id: number): Observable<Order> {
         const headers = new HttpHeaders(this.authService.getAuthHeaders());
         return this.http.get<Order>(`${this.apiUrl}/${id}`, { headers });
+    }
+
+    getTimeline(orderId: number): Observable<{ orderId: number; currentStatus: string; events: { status: string; timestamp: string }[] }> {
+        const headers = new HttpHeaders(this.authService.getAuthHeaders());
+        return this.http.get<any>(`${this.apiUrl}/${orderId}/timeline`, { headers });
+    }
+
+    reorder(orderId: number): Observable<{ message: string; orderId: number; totalAmount: number; itemCount: number }> {
+        const headers = new HttpHeaders(this.authService.getAuthHeaders());
+        return this.http.post<any>(`${this.apiUrl}/reorder/${orderId}`, {}, { headers });
     }
 }

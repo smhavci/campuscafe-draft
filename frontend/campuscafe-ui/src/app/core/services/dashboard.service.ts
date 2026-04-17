@@ -12,6 +12,8 @@ export interface DashboardOrder {
     updatedAt?: string;
     customerName: string;
     customerRole: string;
+    pickupTime?: string;
+    paymentMethod?: string;
     items: DashboardOrderItem[];
 }
 
@@ -25,6 +27,7 @@ export interface DashboardOrderItem {
     note: string;
     status: string;
     cancelReason: string;
+    options?: { name: string; price: number }[];
 }
 
 export interface Analytics {
@@ -83,5 +86,17 @@ export class DashboardService {
 
     getAnalytics(): Observable<Analytics> {
         return this.http.get<Analytics>(`${this.apiUrl}/analytics`, { headers: this.getHeaders() });
+    }
+
+    getWeeklyAnalytics(): Observable<{ date: string; orderCount: number; revenue: number }[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/analytics/weekly`, { headers: this.getHeaders() });
+    }
+
+    getHourlyDistribution(): Observable<{ hour: number; count: number }[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/analytics/hourly`, { headers: this.getHeaders() });
+    }
+
+    getCustomerSegments(): Observable<{ role: string; customerCount: number; orderCount: number; totalSpent: number }[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/analytics/customers`, { headers: this.getHeaders() });
     }
 }

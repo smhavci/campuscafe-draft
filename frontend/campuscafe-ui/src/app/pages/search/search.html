@@ -1,0 +1,80 @@
+<div class="search-page">
+  <div class="page-header">
+    <h1 class="page-title">🔍 Ürün Ara</h1>
+    <p class="page-subtitle">Tüm kafelerde arama yap</p>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar-wrapper">
+    <input type="text"
+           class="search-input"
+           [value]="searchQuery"
+           (input)="onQueryChange($any($event.target).value)"
+           placeholder="Latte, brownie, simit..."
+           autofocus />
+    <span class="search-icon">🔍</span>
+  </div>
+
+  <!-- Category Chips -->
+  <div class="category-chips">
+    <button class="chip" [class.chip-active]="selectedCategory === 'all'" (click)="selectCategory('all')">
+      🍽️ Tümü
+    </button>
+    @for (cat of categories(); track cat.id) {
+    <button class="chip" [class.chip-active]="selectedCategory === cat.name" (click)="selectCategory(cat.name)">
+      {{ cat.icon }} {{ cat.displayName }}
+    </button>
+    }
+  </div>
+
+  <!-- Price Range -->
+  <div class="price-filters">
+    <div class="price-input-group">
+      <label>Min ₺</label>
+      <input type="number" [(ngModel)]="minPrice" (change)="doSearch()" placeholder="0" min="0" />
+    </div>
+    <span class="price-dash">—</span>
+    <div class="price-input-group">
+      <label>Max ₺</label>
+      <input type="number" [(ngModel)]="maxPrice" (change)="doSearch()" placeholder="∞" min="0" />
+    </div>
+    @if (searchQuery || selectedCategory !== 'all' || minPrice || maxPrice) {
+    <button class="clear-btn" (click)="clearFilters()">✕ Temizle</button>
+    }
+  </div>
+
+  <!-- Results -->
+  @if (loading()) {
+  <div class="loading-state"><p>Aranıyor...</p></div>
+  } @else if (results().length === 0 && hasSearched()) {
+  <div class="empty-state">
+    <span class="empty-icon">🔎</span>
+    <p>Sonuç bulunamadı</p>
+  </div>
+  } @else {
+  <div class="results-count">{{ results().length }} ürün bulundu</div>
+  <div class="results-grid">
+    @for (product of results(); track product.id) {
+    <div class="result-item">
+      <app-product-card 
+          [product]="product" 
+          (addToCart)="onAddToCart($event)" 
+          (explore)="openDetail($event)" />
+      
+      <!-- Kafe Linki (Search'e özel) -->
+      <a class="result-cafe-link" [routerLink]="'/cafe/' + product.cafeSlug">
+        ☕ {{ product.cafeName }}
+      </a>
+    </div>
+    }
+  </div>
+
+  @if (selectedProjectForDetail(); as p) {
+  <app-product-detail 
+      [product]="p" 
+      (close)="closeDetail()" 
+      (confirm)="onConfirmCustomization($event)"
+      (saveFavorite)="onSaveFavorite($event)" />
+  }
+  }
+</div>

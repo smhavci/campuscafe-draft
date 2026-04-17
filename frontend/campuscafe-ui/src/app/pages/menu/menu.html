@@ -18,9 +18,20 @@
 
     <div class="products-grid">
         @for (product of filteredProducts(); track product.id) {
-        <app-product-card [product]="product" (addToCart)="onAddToCart($event)" />
+        <app-product-card 
+            [product]="product" 
+            (addToCart)="onAddToCart($event)" 
+            (explore)="openDetail($event)" />
         }
     </div>
+
+    @if (selectedProjectForDetail(); as p) {
+    <app-product-detail 
+        [product]="p" 
+        (close)="closeDetail()" 
+        (confirm)="onConfirmCustomization($event)"
+        (saveFavorite)="onSaveFavorite($event)" />
+    }
 
     @if (filteredProducts().length === 0) {
     <div class="empty-state">

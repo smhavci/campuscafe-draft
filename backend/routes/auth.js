@@ -123,7 +123,7 @@ router.post('/login', async (req, res) => {
             }
             user = db.prepare(
                 `SELECT id, first_name AS firstName, last_name AS lastName,
-                  student_number AS studentNumber, email, password_hash, role, cafe_id AS cafeId
+                  student_number AS studentNumber, email, password_hash, role, cafe_id AS cafeId, stars
                  FROM users WHERE student_number = ? AND role = 'student'`
             ).get(studentNumber);
         } else {
@@ -132,7 +132,7 @@ router.post('/login', async (req, res) => {
             }
             user = db.prepare(
                 `SELECT id, first_name AS firstName, last_name AS lastName,
-                  student_number AS studentNumber, email, password_hash, role, cafe_id AS cafeId
+                  student_number AS studentNumber, email, password_hash, role, cafe_id AS cafeId, stars
                  FROM users WHERE email = ? AND role = ?`
             ).get(email, userRole);
         }
@@ -177,7 +177,7 @@ router.get('/me', authMiddleware, (req, res) => {
         const user = db.prepare(
             `SELECT id, first_name AS firstName, last_name AS lastName,
                     student_number AS studentNumber, email, role, cafe_id AS cafeId,
-                    created_at AS createdAt
+                    stars, created_at AS createdAt
              FROM users
              WHERE id = ?`
         ).get(req.user.id);
@@ -270,7 +270,7 @@ router.patch('/me', authMiddleware, async (req, res) => {
         // Güncellenmiş kullanıcıyı döndür (şifre hash'i olmadan)
         const updated = db.prepare(
             `SELECT id, first_name AS firstName, last_name AS lastName,
-                    student_number AS studentNumber, email, role, cafe_id AS cafeId
+                    student_number AS studentNumber, email, role, cafe_id AS cafeId, stars
              FROM users WHERE id = ?`
         ).get(userId);
 

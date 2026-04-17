@@ -15,6 +15,9 @@
     <button class="tab-btn" [class.active]="activeTab() === 'history'" (click)="setTab('history')">
       📋 Sipariş Geçmişi
     </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'analytics'" (click)="setTab('analytics')">
+      📈 Haftalık Analiz
+    </button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -79,43 +82,68 @@
     } @else {
     <div class="orders-list">
       @for (order of orders(); track order.id) {
-      <div class="order-card" [class.ready]="order.status === 'ready'">
+      <div class="order-card" [class.ready]="order.status === 'ready'" [class.priority]="order.pickupTime">
         <div class="order-header">
           <div class="order-info">
             <span class="order-id">#{{ order.id }}</span>
-            <span class="order-customer">{{ order.customerName }}</span>
-            <span class="order-role">{{ getRoleLabel(order.customerRole) }}</span>
+            <div class="customer-row">
+              <span class="order-customer">{{ order.customerName }}</span>
+              <span class="order-role">{{ getRoleLabel(order.customerRole) }}</span>
+            </div>
+            @if (order.pickupTime) {
+            <div class="pickup-time-badge">
+              ⏱️ {{ formatShortTime(order.pickupTime) }} <span class="pickup-text">Teslimat</span>
+            </div>
+            }
           </div>
           <div class="order-meta">
-            <span class="order-status">{{ getStatusLabel(order.status) }}</span>
-            <span class="order-total">{{ order.totalAmount | currency:'TRY':'₺':'1.0-0' }}</span>
+            <span class="order-status badge-{{order.status}}">{{ getStatusLabel(order.status) }}</span>
+            <div class="payment-info">
+              <span class="pay-method">{{ order.paymentMethod === 'wallet' ? '⭐ Cüzdan' : '💳 Kart' }}</span>
+              <span class="order-total">{{ order.totalAmount | currency:'TRY':'₺':'1.0-0' }}</span>
+            </div>
           </div>
         </div>
 
         <div class="order-items">
           @for (item of order.items; track item.id) {
-          <div class="order-item-row" [class.cancelled]="item.status === 'cancelled'">
-            <span class="item-qty">{{ item.quantity }}x</span>
-            <span class="item-name">
-                            {{ item.productName }}
-                            @if (item.status === 'cancelled') {
-                            <span class="item-cancelled-tag">İPTAL</span>
-                            }
-                        </span>
+          <div class="order-item-wrapper" [class.cancelled]="item.status === 'cancelled'">
+            <div class="order-item-row">
+              <span class="item-qty">{{ item.quantity }}x</span>
+              <span class="item-name">
+                {{ item.productName }}
+                @if (item.status === 'cancelled') {
+                <span class="item-cancelled-tag">İPTAL</span>
+                }
+              </span>
+              
+              @if (item.status === 'active') {
+              <div class="item-actions-inline">
+                @if (cancellingItemId() === item.id) {
+                <div class="item-cancel-form">
+                  <input type="text" [(ngModel)]="cancelReason" placeholder="İptal sebebi"
+                         class="cancel-reason-input" />
+                  <button class="cancel-confirm-btn" (click)="confirmCancelItem(order.id, item.id)">✓</button>
+                  <button class="cancel-abort-btn" (click)="abortCancelItem()">✕</button>
+                </div>
+                } @else {
+                <button class="item-cancel-btn" (click)="startCancelItem(item.id)">✕</button>
+                }
+              </div>
+              }
+            </div>
+
+            <!-- Customizations -->
+            @if (item.options && item.options.length > 0) {
+            <div class="item-options-list-barista">
+              @for (opt of item.options; track opt.name) {
+              <span class="opt-tag-barista">+ {{ opt.name }}</span>
+              }
+            </div>
+            }
+
             @if (item.note && item.status === 'active') {
             <span class="item-note">📝 {{ item.note }}</span>
-            }
-            @if (item.status === 'active') {
-            @if (cancellingItemId() === item.id) {
-            <div class="item-cancel-form">
-              <input type="text" [(ngModel)]="cancelReason" placeholder="İptal sebebi (opsiyonel)"
-                     class="cancel-reason-input" />
-              <button class="cancel-confirm-btn" (click)="confirmCancelItem(order.id, item.id)">✓</button>
-              <button class="cancel-abort-btn" (click)="abortCancelItem()">✕</button>
-            </div>
-            } @else {
-            <button class="item-cancel-btn" (click)="startCancelItem(item.id)">✕</button>
-            }
             }
           </div>
           }
@@ -238,6 +266,83 @@
       <button class="page-btn" (click)="nextPage()" [disabled]="historyPage() >= pg.totalPages">Sonraki →</button>
     </div>
     }
+    }
+
+    }
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- HAFTALIK ANALİZ SEKMESİ                     -->
+  <!-- ══════════════════════════════════════════ -->
+  @if (activeTab() === 'analytics') {
+  <div class="section">
+
+    @if (analyticsLoading()) {
+    <div class="loading-state"><p>Veriler yükleniyor...</p></div>
+    } @else {
+
+    <!-- Özet kartları -->
+    <div class="analytics-grid">
+      <div class="stat-card">
+        <span class="stat-icon">📊</span>
+        <span class="stat-value">{{ weeklyTotalOrders }}</span>
+        <span class="stat-label">7 Günlük Sipariş</span>
+      </div>
+      <div class="stat-card revenue">
+        <span class="stat-icon">💰</span>
+        <span class="stat-value">{{ weeklyTotalRevenue | currency:'TRY':'₺':'1.0-0' }}</span>
+        <span class="stat-label">7 Günlük Gelir</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⏰</span>
+        <span class="stat-value">{{ peakHour }}:00</span>
+        <span class="stat-label">En Yoğun Saat</span>
+      </div>
+    </div>
+
+    <!-- Haftalık Gelir Grafiği -->
+    <div class="chart-section">
+      <h2 class="section-title">💰 Haftalık Gelir</h2>
+      <div class="chart-container">
+        <canvas #weeklyChart class="chart-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Saatlik Dağılım Grafiği -->
+    <div class="chart-section">
+      <h2 class="section-title">⏰ Bugünün Saat Bazlı Dağılımı</h2>
+      <div class="chart-container">
+        <canvas #hourlyChart class="chart-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Müşteri Segmentasyonu -->
+    @if (customerSegments().length > 0) {
+    <div class="chart-section">
+      <h2 class="section-title">👥 Müşteri Segmentasyonu</h2>
+      <div class="segments-grid">
+        @for (seg of customerSegments(); track seg.role) {
+        <div class="segment-card">
+          <div class="segment-role">{{ getRoleLabelShort(seg.role) }}</div>
+          <div class="segment-stats">
+            <div class="segment-stat">
+              <span class="segment-value">{{ seg.customerCount }}</span>
+              <span class="segment-label">Müşteri</span>
+            </div>
+            <div class="segment-stat">
+              <span class="segment-value">{{ seg.orderCount }}</span>
+              <span class="segment-label">Sipariş</span>
+            </div>
+            <div class="segment-stat">
+              <span class="segment-value">{{ seg.totalSpent | currency:'TRY':'₺':'1.0-0' }}</span>
+              <span class="segment-label">Toplam</span>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
     }
 
     }

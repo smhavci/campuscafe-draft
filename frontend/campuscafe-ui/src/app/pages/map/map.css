@@ -1,0 +1,204 @@
+.map-page {
+    padding: 6rem 1.5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0 0 0.4rem;
+}
+
+.page-subtitle {
+    color: rgba(255,255,255,0.4);
+}
+
+.map-container-wrapper {
+    flex: 1;
+    display: flex;
+    gap: 1.5rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+}
+
+/* Sidebar */
+.cafe-sidebar {
+    width: 320px;
+    background: rgba(0,0,0,0.2);
+    border-right: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+}
+
+.sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    color: #c8a97e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cafe-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Scrollbar styling */
+.cafe-list::-webkit-scrollbar { width: 4px; }
+.cafe-list::-webkit-scrollbar-track { background: transparent; }
+.cafe-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+.cafe-card-mini {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cafe-card-mini:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: #c8a97e;
+    transform: translateY(-2px);
+}
+
+.cafe-card-mini img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.cafe-mini-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.cafe-mini-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.2rem;
+    color: #fff;
+}
+
+.cafe-mini-loc {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 0.4rem;
+}
+
+.cafe-mini-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cafe-mini-hours {
+    font-size: 0.7rem;
+    color: rgba(200,169,126,0.6);
+}
+
+.view-menu-btn {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #c8a97e;
+    text-decoration: none;
+    background: rgba(200,169,126,0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.view-menu-btn:hover {
+    background: #c8a97e;
+    color: #000;
+}
+
+/* Map Area */
+.map-area {
+    flex: 1;
+    position: relative;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+/* Custom Map Styling */
+.map-tiles {
+    filter: invert(100%) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
+.user-location-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-dot {
+    width: 12px;
+    height: 12px;
+    background: #4285f4;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(66,133,244,0.6);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(66,133,244,0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(66,133,244,0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(66,133,244,0); }
+}
+
+.map-popup {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 5px;
+}
+
+/* Leaflet Overrides */
+::ng-deep .leaflet-popup-content-wrapper {
+    background: #1a1a1a !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+::ng-deep .leaflet-popup-tip {
+    background: #1a1a1a !important;
+}
+
+::ng-deep .leaflet-container {
+    background: #1a1a1a !important;
+}
+
+@media (max-width: 768px) {
+    .map-container-wrapper { flex-direction: column-reverse; }
+    .cafe-sidebar { width: 100%; height: 250px; border-right: none; border-top: 1px solid rgba(255,255,255,0.08); }
+    .map-area { height: 350px; }
+}

@@ -114,12 +114,198 @@
     background: linear-gradient(90deg, var(--card-color, #e07a5f), #fbbf24);
 }
 
-/* Card Header */
-.card-header {
+/* ── Star System Hero Section ────────────────────────── */
+.star-hero-card {
+    background: linear-gradient(145deg, #111115, #1a1a22);
+    border: 1px solid rgba(255, 215, 0, 0.1);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 2rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.star-hero-card::after {
+    content: '✨';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 5rem;
+    opacity: 0.05;
+    transform: rotate(15deg);
+}
+
+.star-main-info {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.star-count-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+}
+
+.star-total {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #ffd700;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+.star-unit {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.star-reward-progress {
+    width: 100%;
+}
+
+.progress-label {
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+}
+
+.progress-bar-container {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.8rem;
+}
+
+.star-fill {
+    background: linear-gradient(90deg, #ffd700, #ff8c00);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.reward-milestones {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.reward-milestones span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.2);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s;
+}
+
+.reward-milestones span.active {
+    color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+/* Star History */
+.star-history-mini {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.star-history-mini h3 {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.history-item {
+    display: flex;
     justify-content: space-between;
-    margin-bottom: 1.8rem;
+    align-items: center;
+}
+
+.history-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.history-desc {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.history-date {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.7rem;
+}
+
+.history-change {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #ff6b6b;
+}
+
+.history-change.plus {
+    color: #7ec8a0;
+}
+
+.empty-history {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.2);
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* Section Title */
+.sub-section-title {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+}
+
+.loyalty-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+/* Loyalty Card Update */
+.loyalty-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.loyalty-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--card-color, #c8a97e);
 }
 
 .card-cafe-info {

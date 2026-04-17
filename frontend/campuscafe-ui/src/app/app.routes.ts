@@ -14,5 +14,9 @@ export const routes: Routes = [
     { path: 'menu-management', loadComponent: () => import('./pages/menu-management/menu-management').then(m => m.MenuManagement) },
     // YENİ: Profil sayfası
     { path: 'profile', loadComponent: () => import('./pages/profile/profile').then(m => m.Profile) },
+    // YENİ: Arama sayfası
+    { path: 'search', loadComponent: () => import('./pages/search/search').then(m => m.Search) },
+    // YENİ: Harita sayfası
+    { path: 'map', loadComponent: () => import('./pages/map/map').then(m => m.MapPage) },
     { path: '**', redirectTo: '' }
 ];

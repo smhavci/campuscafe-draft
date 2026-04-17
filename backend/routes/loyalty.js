@@ -115,4 +115,77 @@ router.post('/redeem', authMiddleware, (req, res) => {
     }
 });
 
+// GET /api/loyalty/status — Get star balance and active stamps
+router.get('/status', authMiddleware, (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Global stars from users table
+        const user = db.prepare('SELECT stars FROM users WHERE id = ?').get(userId);
+        
+        // Cafe-specific stamps (e.g., Sokak Kahvecisi)
+        const cards = db.prepare(
+            `SELECT lc.stamps, c.name AS cafeName, c.id AS cafeId
+             FROM loyalty_cards lc
+             JOIN cafes c ON c.id = lc.cafe_id
+             WHERE lc.user_id = ?`
+        ).all(userId);
+
+        res.json({
+            stars: user ? user.stars : 0,
+            cards: cards,
+            nextRewardThreshold: (user?.stars || 0) < 15 ? 15 : 30
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+// GET /api/loyalty/history — Get star transaction history (derived from orders)
+router.get('/history', authMiddleware, (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const orders = db.prepare(
+            `SELECT o.id, o.total_amount AS totalAmount, o.payment_method AS paymentMethod,
+                    o.created_at AS createdAt, o.status,
+                    c.name AS cafeName
+             FROM orders o
+             LEFT JOIN cafes c ON c.id = o.cafe_id
+             WHERE o.user_id = ? AND o.status != 'cancelled'
+             ORDER BY o.created_at DESC LIMIT 20`
+        ).all(userId);
+
+        // Derive stars earned/spent from each order
+        const history = orders.map(order => {
+            let change = 0;
+            let type = 'earn';
+            
+            if (order.paymentMethod === 'stars') {
+                // For spent stars, we'd need to fetch the actual count from items if we didn't store it in the order.
+                // Since we don't store "stars spent" total in orders table yet, we'll re-calculate or assume for this summary.
+                // To be precise, I SHOULD have added a 'stars_spent' column to orders.
+                // But following the user plan (minimal schema changes), I'll just note it as 'Redemption'.
+                type = 'redeem';
+            } else {
+                change = Math.floor(order.totalAmount / 10);
+            }
+
+            return {
+                id: order.id,
+                date: order.createdAt,
+                description: type === 'earn' ? `${order.cafeName} Siparişi` : `${order.cafeName} Ödül Kullanımı`,
+                change: type === 'earn' ? `+${change}` : 'Redeemed',
+                type: type
+            };
+        });
+
+        res.json(history);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
 module.exports = router;

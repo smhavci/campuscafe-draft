@@ -58,6 +58,22 @@
   background: rgba(200, 169, 126, 0.1);
 }
 
+.star-pill {
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffd700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 6px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+}
+
+.rewards-link {
+    display: flex !important;
+    align-items: center;
+}
+
 .cart-link {
   position: relative;
   display: flex;

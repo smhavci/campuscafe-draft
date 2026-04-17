@@ -16,6 +16,7 @@ export interface User {
     role: UserRole;
     cafeId?: number;
     cafeName?: string;
+    stars?: number;
     createdAt?: string;
 }
 

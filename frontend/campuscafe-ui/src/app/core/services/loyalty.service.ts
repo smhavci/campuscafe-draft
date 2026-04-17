@@ -29,6 +29,20 @@ export interface RedeemResponse {
     orderId: number;
 }
 
+export interface StarHistory {
+    id: number;
+    date: string;
+    description: string;
+    change: string;
+    type: 'earn' | 'redeem';
+}
+
+export interface LoyaltyStatus {
+    stars: number;
+    cards: { stamps: number; cafeName: string; cafeId: number }[];
+    nextRewardThreshold: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LoyaltyService {
     private apiUrl = `${API_BASE_URL}/loyalty`;
@@ -38,6 +52,16 @@ export class LoyaltyService {
     getCards(): Observable<LoyaltyCard[]> {
         const headers = new HttpHeaders(this.authService.getAuthHeaders());
         return this.http.get<LoyaltyCard[]>(this.apiUrl, { headers });
+    }
+
+    getStatus(): Observable<LoyaltyStatus> {
+        const headers = new HttpHeaders(this.authService.getAuthHeaders());
+        return this.http.get<LoyaltyStatus>(`${this.apiUrl}/status`, { headers });
+    }
+
+    getHistory(): Observable<StarHistory[]> {
+        const headers = new HttpHeaders(this.authService.getAuthHeaders());
+        return this.http.get<StarHistory[]>(`${this.apiUrl}/history`, { headers });
     }
 
     getCoffees(cafeId: number): Observable<CoffeeOption[]> {

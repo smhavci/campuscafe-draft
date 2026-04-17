@@ -1,0 +1,33 @@
+<div class="map-page">
+  <div class="page-header">
+    <h1 class="page-title">📍 Şube Haritası</h1>
+    <p class="page-subtitle">Size en yakın CampusCafe şubesini bulun</p>
+  </div>
+
+  <div class="map-container-wrapper">
+    <!-- Sidebar: Liste -->
+    <div class="cafe-sidebar">
+      <h3 class="sidebar-title">Şubelerimiz</h3>
+      <div class="cafe-list">
+        @for (cafe of cafes(); track cafe.id) {
+        <div class="cafe-card-mini" (click)="centerOnCafe(cafe)">
+          <img [src]="cafe.image" [alt]="cafe.name">
+          <div class="cafe-mini-info">
+            <h4 class="cafe-mini-name">{{ cafe.name }}</h4>
+            <span class="cafe-mini-loc">📍 {{ cafe.location }}</span>
+            <div class="cafe-mini-footer">
+              <span class="cafe-mini-hours">🕒 {{ cafe.openHours }}</span>
+              <a [routerLink]="'/cafe/' + cafe.slug" class="view-menu-btn" (click)="$event.stopPropagation()">Menü</a>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Harita Alanı -->
+    <div class="map-area">
+      <div id="map"></div>
+    </div>
+  </div>
+</div>

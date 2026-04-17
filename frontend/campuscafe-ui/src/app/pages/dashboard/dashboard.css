@@ -435,4 +435,160 @@
     .history-card-header { flex-direction: column; align-items: flex-start; }
     .history-right { gap: 0.5rem; }
     .history-filters { flex-direction: column; }
+    .segments-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Charts & Analytics ──────────────────────────── */
+.chart-section {
+    margin-bottom: 2rem;
+}
+
+.chart-container {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 1.25rem;
+    overflow: hidden;
+}
+
+.chart-canvas {
+    width: 100%;
+    height: 220px;
+    display: block;
+}
+
+/* Müşteri Segmentasyonu */
+.segments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.segment-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+}
+
+.segment-card:hover {
+    border-color: rgba(200,169,126,0.25);
+}
+
+.segment-role {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.segment-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 0.5rem;
+}
+
+.segment-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.segment-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #c8a97e;
+}
+
+.segment-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+/* Enterprise Dashboard Enhancements */
+.order-card.priority {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+}
+
+.pickup-time-badge {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.pickup-text {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+.customer-row {
+    display: flex;
+    flex-direction: column;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    margin-top: 0.4rem;
+}
+
+.pay-method {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+}
+
+.item-options-list-barista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.3rem 0;
+    padding-left: 1.8rem;
+}
+
+.opt-tag-barista {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(200, 169, 126, 0.08);
+    color: #c8a97e;
+    padding: 0.1rem 0.45rem;
+    border-radius: 5px;
+    letter-spacing: 0.02em;
+}
+
+.item-actions-inline {
+    margin-left: auto;
+}
+
+.order-item-wrapper {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.order-item-wrapper:last-child {
+    border-bottom: none;
+}
+
+.badge-preparing { color: #f59e0b; }
+.badge-ready { color: #10b981; }
+.badge-delivered { color: #6366f1; }
+
+.section-title .order-count {
+    margin-left: 0.75rem;
 }

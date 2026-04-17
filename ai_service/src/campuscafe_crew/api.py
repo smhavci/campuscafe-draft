@@ -16,6 +16,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from campuscafe_crew.crew import CampusCafeCrew
+from campuscafe_crew.graph import campus_app
+from langchain_core.messages import HumanMessage
 
 app = FastAPI(
     title="CampusCafe AI API",
@@ -47,6 +49,10 @@ class PreOrderPredictionRequest(BaseModel):
 
 class InventoryMonitorRequest(BaseModel):
     cafe_id: str
+
+
+class GraphChatRequest(BaseModel):
+    message: str
 
 
 # --- Endpoints ---
@@ -108,6 +114,27 @@ async def create_campaign(request: InventoryMonitorRequest):
         }
         result = CampusCafeCrew().campaign_crew().kickoff(inputs=inputs)
         return {"response": str(result)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/chat/graph")
+async def chat_with_graph(request: GraphChatRequest):
+    """LangGraph tabanlı akıllı asistan ile görüşme."""
+    try:
+        initial_state = {
+            "messages": [HumanMessage(content=request.message)],
+            "next_step": "",
+            "final_response": ""
+        }
+        
+        # Grafik akışını çalıştır
+        result = campus_app.invoke(initial_state)
+        
+        return {
+            "response": result["final_response"],
+            "path_taken": result["next_step"]
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

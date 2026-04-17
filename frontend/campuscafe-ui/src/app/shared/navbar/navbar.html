@@ -3,6 +3,8 @@
   <div class="nav-links">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
     <a routerLink="/campaigns" routerLinkActive="active">Kampanyalar</a>
+    <a routerLink="/map" routerLinkActive="active">📍 Kafeler</a>
+    <a routerLink="/search" routerLinkActive="active">🔍 Ara</a>
 
     @if (authService.isLoggedIn()) {
     @if (authService.isOwner()) {
@@ -16,7 +18,10 @@
       🍽️ Menü & Kampanya
     </a>
     }
-    <a routerLink="/rewards" routerLinkActive="active">🎁 Kazançlarım</a>
+      <a routerLink="/rewards" routerLinkActive="active" class="rewards-link">
+        🎁 Kazançlarım
+        <span class="star-pill">⭐ {{ authService.currentUser()?.stars || 0 }}</span>
+      </a>
     <a routerLink="/cart" routerLinkActive="active" class="cart-link">
       🛒 Sepet
       @if (cartService.totalItems() > 0) {

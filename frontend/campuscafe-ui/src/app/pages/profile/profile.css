@@ -223,3 +223,253 @@
     .form-grid { grid-template-columns: 1fr; }
     .sections { flex-direction: column; }
 }
+
+/* Favorites */
+.empty-favorites {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: rgba(255,255,255,0.4);
+}
+.empty-favorites .empty-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.favorites-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.fav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 0.75rem;
+    transition: all 0.2s;
+}
+
+.fav-item:hover {
+    border-color: rgba(200,169,126,0.25);
+}
+
+.fav-image {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.fav-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.fav-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 0.2rem;
+}
+
+.fav-cafe a {
+    font-size: 0.78rem;
+    color: rgba(200,169,126,0.8);
+    text-decoration: none;
+}
+.fav-cafe a:hover { color: #c8a97e; }
+
+.fav-price {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #c8a97e;
+    margin-top: 0.15rem;
+}
+
+.fav-remove-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,100,100,0.1);
+    border: 1px solid rgba(255,100,100,0.2);
+    color: #ff6b6b;
+    cursor: pointer;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+.fav-remove-btn:hover {
+    background: rgba(255,100,100,0.2);
+    transform: scale(1.1);
+}
+
+/* Wallet */
+.wallet-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border: 1px solid rgba(200, 169, 126, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.wallet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding: 1rem;
+    background: rgba(200, 169, 126, 0.08);
+    border-radius: 16px;
+}
+
+.wallet-label {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.wallet-val {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #c8a97e;
+    margin: 0;
+}
+
+.wallet-illustration {
+    font-size: 3.5rem;
+    opacity: 0.8;
+}
+
+.amount-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.amount-btn {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 0.75rem 0;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.amount-btn:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(200, 169, 126, 0.3);
+}
+
+.amount-btn.active {
+    background: #c8a97e;
+    color: #1a1410;
+    border-color: #c8a97e;
+    box-shadow: 0 4px 15px rgba(200, 169, 126, 0.4);
+}
+
+.section-desc {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Saved Drinks Specific */
+.drink-item {
+    padding: 1rem;
+    align-items: flex-start;
+}
+
+.drink-image-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.drink-badge {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #c8a97e;
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.drink-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+
+.drink-base-name {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.3);
+}
+
+.drink-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+}
+
+.opt-tag {
+    font-size: 0.65rem;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.6);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.drink-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.drink-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.order-again-btn {
+    background: rgba(200,169,126,0.1);
+    border: 1px solid rgba(200,169,126,0.3);
+    color: #c8a97e;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.order-again-btn:hover {
+    background: #c8a97e;
+    color: #1a1410;
+}
+
+.fav-remove-btn.mini {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+}

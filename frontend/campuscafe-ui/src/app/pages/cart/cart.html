@@ -1,99 +1,184 @@
 <div class="cart-page">
-    <div class="page-header">
-        <h1 class="page-title">Sepetim</h1>
-        <p class="page-subtitle">Siparişini gözden geçir</p>
-    </div>
+  <div class="page-header">
+    <h1 class="page-title">Sepetim</h1>
+    <p class="page-subtitle">Siparişini gözden geçir</p>
+  </div>
 
-    @if (orderPlaced()) {
-    <div class="order-success">
-        <div class="success-icon">✅</div>
-        <h2>Sipariş Onaylandı!</h2>
-        <p>Siparişin başarıyla oluşturuldu. Afiyet olsun!</p>
-        <a routerLink="/orders" class="btn-primary">Siparişlerimi Gör</a>
-    </div>
-    } @else if (cartService.items().length === 0) {
-    <div class="empty-cart">
-        <div class="empty-icon">🛒</div>
-        <h2>Sepetin boş</h2>
-        <p>Henüz bir şey eklemedin.</p>
-        <a routerLink="/" class="btn-primary">Kafeleri Keşfet</a>
-    </div>
-    } @else {
-    <div class="cart-layout">
+  @if (orderPlaced()) {
+  <div class="order-success">
+    <div class="success-icon">✅</div>
+    <h2>Sipariş Onaylandı!</h2>
+    <p>Siparişin başarıyla oluşturuldu. Afiyet olsun!</p>
+    <a routerLink="/orders" class="btn-primary">Siparişlerimi Gör</a>
+  </div>
+  } @else if (cartService.items().length === 0) {
+  <div class="empty-cart">
+    <div class="empty-icon">🛒</div>
+    <h2>Sepetin boş</h2>
+    <p>Henüz bir şey eklemedin.</p>
+    <a routerLink="/" class="btn-primary">Kafeleri Keşfet</a>
+  </div>
+  } @else {
+  <div class="cart-layout">
+    <div class="cart-main">
+      <!-- Items Section -->
+      <div class="cart-section">
+        <h2 class="section-title">📦 Ürünler ({{ cartService.currentCafeName() }})</h2>
         <div class="cart-items">
-            @for (item of cartService.items(); track item.product.id) {
-            <div class="cart-item">
-                <img [src]="item.product.image" [alt]="item.product.name" class="item-image" />
-                <div class="item-details">
-                    <h3 class="item-name">{{ item.product.name }}</h3>
-                    <span class="item-category">{{ item.product.category }}</span>
-                    <div class="item-price-row">
-                        @if (item.discount > 0) {
-                        <span class="item-price-old">{{ item.product.price | currency:'TRY':'₺':'1.0-0' }}</span>
-                        <span class="item-price-discount">{{ getDiscountedPrice(item) | currency:'TRY':'₺':'1.0-0'
-                            }}</span>
-                        <span class="item-campaign-badge">{{ item.campaignTitle }}</span>
-                        } @else {
-                        <span class="item-price">{{ item.product.price | currency:'TRY':'₺':'1.0-0' }}</span>
-                        }
-                    </div>
-                </div>
-                <div class="item-controls">
-                    <button class="qty-btn" (click)="decreaseQty(item)">−</button>
-                    <span class="qty-value">{{ item.quantity }}</span>
-                    <button class="qty-btn" (click)="increaseQty(item)">+</button>
-                </div>
-                <span class="item-total">{{ getItemTotal(item) | currency:'TRY':'₺':'1.0-0' }}</span>
-                <button class="remove-btn" (click)="removeItem(item)">✕</button>
-            </div>
-            <!-- Note input -->
-            <div class="item-note-row">
+          @for (item of cartService.items(); track item.id) {
+          <div class="cart-item">
+            <img [src]="item.product.image" [alt]="item.product.name" class="item-image" />
+            <div class="item-details">
+              <h3 class="item-name">{{ item.product.name }}</h3>
+              
+              <!-- Selected Options -->
+              @if (item.selectedOptions.length > 0) {
+              <div class="item-options-list">
+                @for (opt of item.selectedOptions; track opt.id) {
+                <span class="opt-tag">+ {{ opt.name }}</span>
+                }
+              </div>
+              }
+
+              <div class="item-price-row">
+                @if (item.discount > 0) {
+                <span class="item-price-old">{{ getItemUnitPrice(item) | currency:'TRY':'₺':'1.0-0' }}</span>
+                <span class="item-price-discount">{{ getItemTotal(item) / item.quantity | currency:'TRY':'₺':'1.0-0' }}</span>
+                <span class="item-campaign-badge">{{ item.campaignTitle }}</span>
+                } @else {
+                <span class="item-price">{{ getItemUnitPrice(item) | currency:'TRY':'₺':'1.0-0' }}</span>
+                }
+                <span class="item-star-cost">✨ {{ item.product.starCost || 0 }} Yıldız</span>
+              </div>
+
+              <!-- Note -->
+              <div class="item-note-box">
                 <input type="text" class="note-input" [value]="item.note"
-                    (input)="updateNote(item, $any($event.target).value)"
-                    placeholder="📝 Not ekle (örn: laktozsuz süt, az şekerli...)" />
+                       (input)="updateNote(item, $any($event.target).value)"
+                       placeholder="📝 Not ekle..." />
+              </div>
             </div>
-            }
+
+            <div class="item-actions">
+              <div class="item-controls">
+                <button class="qty-btn" (click)="decreaseQty(item)">−</button>
+                <span class="qty-value">{{ item.quantity }}</span>
+                <button class="qty-btn" (click)="increaseQty(item)">+</button>
+              </div>
+              <span class="item-total-price">{{ getItemTotal(item) | currency:'TRY':'₺':'1.0-0' }}</span>
+              <button class="remove-btn" (click)="removeItem(item)" title="Sil">✕</button>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Enterprise Settings Section -->
+      <div class="cart-section settings-section">
+        <h2 class="section-title">⏱️ Sipariş Ayarları</h2>
+        
+        <!-- Pickup Time -->
+        <div class="setting-group">
+          <label class="setting-label">Teslim Alma Zamanı</label>
+          <div class="pickup-selector">
+            <input type="datetime-local" class="pickup-input" 
+                   [ngModel]="pickupTime()" (ngModelChange)="pickupTime.set($event)" />
+            <p class="setting-desc">Hemen hazırlanmasını istiyorsanız boş bırakın.</p>
+          </div>
         </div>
 
-        <div class="order-summary">
-            <h2 class="summary-title">Sipariş Özeti</h2>
-            <div class="summary-row">
-                <span>Ürünler</span>
-                <span>{{ cartService.totalItems() }}</span>
-            </div>
-            <div class="summary-row">
-                <span>Ara Toplam</span>
-                <span>{{ cartService.subtotalPrice() | currency:'TRY':'₺':'1.0-0' }}</span>
-            </div>
-            @if (cartService.discountAmount() > 0) {
-            <div class="summary-row discount-row">
-                <span>🎉 Kampanya İndirimi</span>
-                <span>−{{ cartService.discountAmount() | currency:'TRY':'₺':'1.0-0' }}</span>
-            </div>
-            }
-            <div class="summary-row">
-                <span>Hizmet Bedeli</span>
-                <span>₺0</span>
-            </div>
-            <hr class="summary-divider" />
-            <div class="summary-row total">
-                <span>Toplam</span>
-                <span>{{ cartService.totalPrice() | currency:'TRY':'₺':'1.0-0' }}</span>
+        <!-- Payment Method -->
+        <div class="setting-group">
+          <label class="setting-label">Ödeme Yöntemi</label>
+          <div class="payment-options">
+            <div class="pay-option" [class.active]="paymentMethod() === 'credit_card'" (click)="setPaymentMethod('credit_card')">
+              <div class="pay-icon">💳</div>
+              <div class="pay-info">
+                <span class="pay-name">Kredi Kartı</span>
+                <span class="pay-sub">Online Ödeme</span>
+              </div>
+              @if (paymentMethod() === 'credit_card') {
+                <div class="pay-check">✓</div>
+              }
             </div>
 
-            @if (orderError()) {
-            <div class="error-msg">{{ orderError() }}</div>
-            }
+            <div class="pay-option" [class.active]="paymentMethod() === 'wallet'" (click)="setPaymentMethod('wallet')">
+              <div class="pay-icon">⭐</div>
+              <div class="pay-info">
+                <span class="pay-name">Yıllık / Kart</span>
+                <span class="pay-sub">Bakiyem: {{ walletService.balance() | currency:'TRY':'₺':'1.0-0' }}</span>
+              </div>
+              @if (paymentMethod() === 'wallet') {
+                <div class="pay-check">✓</div>
+              }
+            </div>
 
-            @if (!authService.isLoggedIn()) {
-            <a routerLink="/login" class="checkout-btn">Giriş Yap & Sipariş Ver</a>
-            } @else {
-            <button class="checkout-btn" (click)="placeOrder()" [disabled]="loading()">
-                {{ loading() ? 'Sipariş veriliyor...' : 'Sipariş Ver' }}
-            </button>
-            }
-            <p class="checkout-note">* Demo — gerçek ödeme yapılmaz.</p>
+            <div class="pay-option" [class.active]="paymentMethod() === 'stars'" (click)="setPaymentMethod('stars')"
+                 [class.disabled]="totalStarCost > (authService.currentUser()?.stars || 0)">
+              <div class="pay-icon">✨</div>
+              <div class="pay-info">
+                <span class="pay-name">Yıldızlarla Öde</span>
+                <span class="pay-sub">
+                  Maliyet: {{ totalStarCost }} ⭐ (Mevcut: {{ authService.currentUser()?.stars || 0 }})
+                </span>
+              </div>
+              @if (paymentMethod() === 'stars') {
+                <div class="pay-check">✓</div>
+              }
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-    }
+
+    <!-- Summary Sidebar -->
+    <div class="order-summary-container">
+      <div class="order-summary">
+        <h2 class="summary-title">Özet</h2>
+        <div class="summary-row">
+          <span>Ürünler</span>
+          <span>{{ cartService.totalItems() }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Ara Toplam</span>
+          <span>{{ cartService.subtotalPrice() | currency:'TRY':'₺':'1.0-0' }}</span>
+        </div>
+        @if (cartService.discountAmount() > 0) {
+        <div class="summary-row discount-row">
+          <span>🎉 Kampanya İndirimi</span>
+          <span>−{{ cartService.discountAmount() | currency:'TRY':'₺':'1.0-0' }}</span>
+        </div>
+        }
+        <div class="summary-row">
+          <span>Bağlantı Ücreti</span>
+          <span class="free">ÜCRETSİZ</span>
+        </div>
+        <hr class="summary-divider" />
+        <div class="summary-row total">
+          <span>{{ paymentMethod() === 'stars' ? 'Toplam Yıldız' : 'Genel Toplam' }}</span>
+          <span>
+            @if (paymentMethod() === 'stars') {
+              ✨ {{ totalStarCost }} Yıldız
+            } @else {
+              {{ cartService.totalPrice() | currency:'TRY':'₺':'1.0-0' }}
+            }
+          </span>
+        </div>
+
+        @if (orderError()) {
+        <div class="error-msg">⚠️ {{ orderError() }}</div>
+        }
+
+        @if (!authService.isLoggedIn()) {
+        <a routerLink="/login" class="checkout-btn">Giriş Yap & Öde</a>
+        } @else {
+        <button class="checkout-btn" (click)="placeOrder()" [disabled]="loading()">
+          {{ loading() ? 'İşleniyor...' : 'Siparişi Onayla' }}
+        </button>
+        }
+        <p class="checkout-note">Siparişin kafe mutfağına anında iletilecek.</p>
+      </div>
+    </div>
+  </div>
+  }
 </div>

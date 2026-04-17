@@ -1,15 +1,26 @@
-<div class="product-card">
+<div class="product-card" (click)="onExplore()">
+    @if (product.brandName) {
+    <div class="brand-badge">
+        @if (product.brandLogo) { <img [src]="product.brandLogo" [alt]="product.brandName" /> }
+        @else { <span>{{ product.brandName }}</span> }
+    </div>
+    }
     <div class="card-image-wrapper">
         <img [src]="product.image" [alt]="product.name" class="card-image" loading="lazy" />
         <span class="card-category">{{ product.category }}</span>
+        @if (authService.isLoggedIn()) {
+        <button class="fav-btn" [class.fav-active]="isFav" (click)="toggleFavorite($event)" title="Favorilere ekle">
+            {{ isFav ? '❤️' : '🤍' }}
+        </button>
+        }
     </div>
     <div class="card-body">
         <h3 class="card-title">{{ product.name }}</h3>
         <p class="card-description">{{ product.description }}</p>
         <div class="card-footer">
             <span class="card-price">{{ product.price | currency:'TRY':'₺':'1.0-0' }}</span>
-            <button class="add-btn" (click)="onAddToCart()">
-                <span class="btn-icon">+</span> Add
+            <button class="add-btn" (click)="onAddToCart($event)">
+                <span class="btn-icon">+</span> Ekle
             </button>
         </div>
     </div>

@@ -215,3 +215,309 @@
     border: 1px solid rgba(100, 149, 237, 0.2);
     color: #6495ed;
 }
+
+/* Toast */
+.toast-msg {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: #2d6a4f;
+    color: #d8f3dc;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    z-index: 9999;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(2rem); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+
+/* Clickable header */
+.order-header { cursor: pointer; }
+
+/* Timeline UI Improvements */
+.order-timeline-container {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.timeline-visual {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.timeline-line {
+    position: absolute;
+    top: 14px;
+    left: 2rem;
+    right: 2rem;
+    height: 2px;
+    background: rgba(255,255,255,0.1);
+    z-index: 0;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+    width: 25%;
+}
+
+.step-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #2a2a2a;
+    border: 3px solid #3a3a3a;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-step.completed .step-dot {
+    background: #c8a97e;
+    border-color: #c8a97e;
+    box-shadow: 0 0 15px rgba(200,169,126,0.4);
+}
+
+.timeline-step.active .step-dot {
+    border-color: #c8a97e;
+    animation: dotPulse 2s infinite;
+}
+
+@keyframes dotPulse {
+    0% { box-shadow: 0 0 0 0 rgba(200,169,126,0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(200,169,126,0); }
+    100% { box-shadow: 0 0 0 0 rgba(200,169,126,0); }
+}
+
+.step-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.timeline-step.completed .step-label,
+.timeline-step.active .step-label {
+    color: #fff;
+}
+
+.timeline-events {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.timeline-event {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+}
+
+.event-time {
+    color: rgba(200,169,126,0.6);
+    font-weight: 700;
+    min-width: 45px;
+}
+
+.event-text {
+    color: rgba(255,255,255,0.6);
+}
+
+.timeline-loading {
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+    padding: 1rem;
+}
+
+/* Order footer */
+.order-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Reorder Button */
+.reorder-btn {
+    background: rgba(200,169,126,0.12);
+    border: 1px solid rgba(200,169,126,0.25);
+    color: #c8a97e;
+    padding: 0.35rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.reorder-btn:hover:not(:disabled) {
+    background: rgba(200,169,126,0.2);
+    border-color: #c8a97e;
+}
+.reorder-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Review Button */
+.review-btn {
+    display: inline-block;
+    margin-left: 2.2rem;
+    margin-bottom: 0.3rem;
+    background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.2);
+    color: #fbbf24;
+    padding: 0.2rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.review-btn:hover { background: rgba(251,191,36,0.2); }
+
+.reviewed-badge {
+    display: inline-block;
+    margin-left: 2.2rem;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 0.3rem;
+}
+
+/* Review Modal */
+.review-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.review-modal {
+    background: #1e1e26;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    width: min(400px, 90vw);
+    text-align: center;
+}
+
+.review-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.5rem;
+}
+
+.review-product-name {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.5);
+    margin: 0 0 1.25rem;
+}
+
+.star-selector {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: rgba(255,255,255,0.2);
+    transition: all 0.2s;
+}
+
+.star-btn.star-filled {
+    color: #fbbf24;
+    transform: scale(1.1);
+}
+
+.star-btn:hover { transform: scale(1.2); }
+
+.review-comment {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: #fff;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    margin-bottom: 1rem;
+}
+.review-comment:focus { border-color: #c8a97e; }
+
+.review-error {
+    color: #ff6b6b;
+    font-size: 0.82rem;
+    margin: 0 0 0.75rem;
+}
+
+.review-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.review-submit-btn {
+    background: #c8a97e;
+    color: #1a1410;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+.review-submit-btn:hover:not(:disabled) { background: #b8956a; }
+.review-submit-btn:disabled { opacity: 0.5; }
+
+.review-cancel-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    padding: 0.6rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
