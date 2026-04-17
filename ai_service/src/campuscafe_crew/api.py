@@ -119,24 +119,32 @@ async def create_campaign(request: InventoryMonitorRequest):
 
 
 @app.post("/graph")
+@app.post("/graph/")
 async def chat_with_graph(request: GraphChatRequest):
     """LangGraph tabanlı akıllı asistan ile görüşme."""
     try:
+        print(f"🤖 LangGraph'a mesaj geldi: {request.message}")
+        
+        # En yalın state yapısı
         initial_state = {
             "messages": [HumanMessage(content=request.message)],
-            "next_step": "",
-            "final_response": ""
+            "next_step": "n/a",
+            "final_response": "Henüz yanıtlanmadı"
         }
         
         # Grafik akışını çalıştır
+        print("🤖 Grafik akışı başlatılıyor...")
         result = campus_app.invoke(initial_state)
+        print(f"🤖 Grafik akışı tamamlandı. Yanıt: {result.get('final_response')}")
         
         return {
-            "response": result["final_response"],
-            "path_taken": result["next_step"]
+            "response": result.get("final_response", "Yanıt oluşturulamadı"),
+            "path_taken": result.get("next_step", "unknown")
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"❌ LangGraph Hatası: {str(e)}")
+        # 404 yerine net bir 500 hatası dönmesini sağlıyoruz
+        raise HTTPException(status_code=500, detail=f"Graph Error: {str(e)}")
 
 
 if __name__ == "__main__":

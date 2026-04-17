@@ -52,7 +52,7 @@ export class ChatbotComponent {
                 if (user?.role === 'cafeOwner') {
                     this.activeMode.set('inventory');
                 } else {
-                    this.activeMode.set('recommend');
+                    this.activeMode.set('assistant');
                 }
             }
         });
