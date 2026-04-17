@@ -1,4 +1,5 @@
 from typing import TypedDict, Annotated, List, Union
+from datetime import datetime
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from campuscafe_crew.crew import CampusCafeCrew
@@ -33,12 +34,15 @@ def router_node(state: GraphState):
 def crewai_node(state: GraphState):
     """Karmaşık görevler için CrewAI ekiplerini çağıran düğüm."""
     last_message = state["messages"][-1].content
-    
-    # Basit bir örnek olarak tavsiye ekibini çağırıyoruz
-    # Gerçek uygulamada router'dan gelen alt kategoriye göre farklı ekipler çağrılabilir
+
     crew = CampusCafeCrew().recommendation_crew()
-    result = crew.kickoff(inputs={"budget": "orta", "dietary_preferences": "yok", "user_input": last_message})
-    
+    result = crew.kickoff(inputs={
+        "budget": "orta",
+        "dietary_preferences": "yok",
+        "time_of_day": datetime.now().strftime("%H:%M"),
+        "user_input": last_message,
+    })
+
     return {"final_response": str(result)}
 
 def general_node(state: GraphState):
