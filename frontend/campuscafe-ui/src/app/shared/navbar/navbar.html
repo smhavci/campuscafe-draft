@@ -43,6 +43,36 @@
       {{ authService.currentUser()?.firstName }}
     </a>
 
+    <!-- Bildirim zili -->
+    <div class="notif-wrapper">
+      <button class="notif-btn" (click)="toggleNotifPanel()">
+        🔔
+        @if (notificationService.unreadCount() > 0) {
+          <span class="notif-badge">{{ notificationService.unreadCount() }}</span>
+        }
+      </button>
+      @if (notifPanelOpen()) {
+        <div class="notif-panel">
+          <div class="notif-panel-header">
+            <span>Bildirimler</span>
+            @if (notificationService.notifications().length > 0) {
+              <button class="notif-clear" (click)="notificationService.dismissAll()">Temizle</button>
+            }
+          </div>
+          @if (notificationService.notifications().length === 0) {
+            <div class="notif-empty">Henüz bildirim yok.</div>
+          }
+          @for (notif of notificationService.notifications(); track notif.id) {
+            <div class="notif-item" [class.unread]="!notif.read" (click)="goToNotif(notif.link)">
+              <div class="notif-title">{{ notif.title }}</div>
+              <div class="notif-msg">{{ notif.message }}</div>
+              <div class="notif-time">{{ notif.timestamp | date:'HH:mm' }}</div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
     <button class="logout-btn" (click)="logout()">Çıkış</button>
     } @else {
     <a routerLink="/login" routerLinkActive="active" class="login-link">Giriş Yap</a>

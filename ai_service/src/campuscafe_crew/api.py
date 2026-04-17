@@ -53,6 +53,8 @@ class InventoryMonitorRequest(BaseModel):
 
 class GraphChatRequest(BaseModel):
     message: str
+    user_id: Optional[str] = None
+    auth_token: Optional[str] = None
 
 
 # --- Endpoints ---
@@ -78,7 +80,10 @@ async def chat_with_graph(request: GraphChatRequest):
         initial_state = {
             "messages": [HumanMessage(content=request.message)],
             "next_step": "n/a",
-            "final_response": "Henüz yanıtlanmadı"
+            "final_response": "Henüz yanıtlanmadı",
+            "user_id": request.user_id,
+            "auth_token": request.auth_token,
+            "user_context": None,
         }
         result = campus_app.invoke(initial_state)
         return {

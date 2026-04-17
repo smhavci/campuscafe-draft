@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
+const { notifyCafe, notifyUser } = require('../utils/notify');
 
 // POST /api/orders — Create order (auth required)
 router.post('/', authMiddleware, (req, res) => {
@@ -106,7 +107,9 @@ router.post('/', authMiddleware, (req, res) => {
                 // Check for Star Multiplier Campaign
                 let multiplier = 1;
                 const activeCampaign = db.prepare(
-                    "SELECT star_multiplier FROM campaigns WHERE cafe_id = ? AND is_active = 1 AND star_multiplier > 1"
+                    `SELECT star_multiplier FROM campaigns
+                     WHERE cafe_id = ? AND is_active = 1 AND star_multiplier > 1
+                     AND (valid_until IS NULL OR valid_until >= date('now'))`
                 ).get(cafeId);
                 
                 if (activeCampaign) {
@@ -126,13 +129,13 @@ router.post('/', authMiddleware, (req, res) => {
                 }
             }
 
-            // 3. Special: Sokak Kahvecisi Stamps (If card/wallet payment)
-            if (cafeId == 2 && coffeeCountForStamps > 0 && paymentMethod !== 'stars') {
-                const existingCard = db.prepare('SELECT id FROM loyalty_cards WHERE user_id = ? AND cafe_id = 2').get(userId);
+            // 3. Loyalty Stamps (tüm kafeler için — sadece kart/cüzdan ödemelerinde)
+            if (coffeeCountForStamps > 0 && paymentMethod !== 'stars' && cafeId) {
+                const existingCard = db.prepare('SELECT id FROM loyalty_cards WHERE user_id = ? AND cafe_id = ?').get(userId, cafeId);
                 if (existingCard) {
                     db.prepare('UPDATE loyalty_cards SET stamps = stamps + ? WHERE id = ?').run(coffeeCountForStamps, existingCard.id);
                 } else {
-                    db.prepare('INSERT INTO loyalty_cards (user_id, cafe_id, stamps) VALUES (?, 2, ?)').run(userId, coffeeCountForStamps);
+                    db.prepare('INSERT INTO loyalty_cards (user_id, cafe_id, stamps) VALUES (?, ?, ?)').run(userId, cafeId, coffeeCountForStamps);
                 }
             }
 
@@ -166,6 +169,30 @@ router.post('/', authMiddleware, (req, res) => {
             `SELECT id, status, total_amount AS totalAmount, pickup_time AS pickupTime, payment_method AS paymentMethod, created_at AS createdAt
              FROM orders WHERE id = ?`
         ).get(orderId);
+
+        // Socket.io: Kafe sahibini yeni sipariş için uyar
+        const io = req.app.get('io');
+        if (cafeId) {
+            const cafeName = db.prepare('SELECT name FROM cafes WHERE id = ?').get(cafeId)?.name || '';
+            notifyCafe(io, cafeId, 'new_order', {
+                orderId,
+                customerName: req.user.firstName,
+                totalAmount: orderSummary.totalAmount,
+                itemCount: orderItemsData.length,
+            });
+        }
+
+        // Socket.io: Kullanıcıya kazanılan yıldızları bildir (stars ödeme dışında)
+        if (paymentMethod !== 'stars') {
+            const starsEarned = Math.floor(orderSummary.totalAmount / 10);
+            if (starsEarned > 0) {
+                const updatedUser = db.prepare('SELECT stars FROM users WHERE id = ?').get(userId);
+                notifyUser(io, userId, 'stars_earned', {
+                    amount: starsEarned,
+                    total: updatedUser?.stars || 0,
+                });
+            }
+        }
 
         res.status(201).json({ ...orderSummary, items: orderItemsData });
     } catch (err) {

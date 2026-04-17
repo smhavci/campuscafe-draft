@@ -7,15 +7,18 @@ recommend_meal_task:
     - Budget limit: {budget} TL
     - Dietary preferences: {dietary_preferences}
     - Time of day: {time_of_day}
-    
-    Search the menu for available items, calculate optimal combinations
-    that maximize value within the budget, and present recommendations
-    with reasoning for each choice.
+    - User's order history and preferences: {user_history}
+
+    Use the user's past order history to personalize your recommendations.
+    If they frequently order a specific type of food or drink, prioritize similar
+    or complementary items. Search the menu for available items, calculate
+    optimal combinations that maximize value within the budget, and present
+    recommendations with reasoning for each choice.
   expected_output: >
-    A structured list of 2-3 meal recommendations, each containing:
+    A structured list of 2-3 personalized meal recommendations in Turkish, each containing:
     - Item name(s) and prices
     - Total cost
-    - Why this option is recommended (value, nutrition, popularity)
+    - Why this option suits this specific user (based on history + value + nutrition)
     - Any active promotions that apply
   agent: budget_health_advisor
 

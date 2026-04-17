@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const { requireRole } = require('../middleware/auth');
+const { notifyCafe, notifyUser } = require('../utils/notify');
 
 // Yardımcı: Sunucu local saatiyle bugünün tarihini al (timezone güvenli)
 function getLocalToday() {
@@ -145,7 +146,7 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('cafeOwner'), (re
         }
 
         const order = db.prepare(
-            'SELECT id FROM orders WHERE id = ? AND cafe_id = ?'
+            'SELECT id, user_id FROM orders WHERE id = ? AND cafe_id = ?'
         ).get(orderId, cafeId);
 
         if (!order) {
@@ -154,6 +155,15 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('cafeOwner'), (re
 
         db.prepare('UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(status, orderId);
         db.prepare('INSERT INTO order_events (order_id, status) VALUES (?, ?)').run(orderId, status);
+
+        const io = req.app.get('io');
+        // Kullanıcıya sipariş durum değişikliği bildir
+        notifyUser(io, order.user_id, 'order_status_changed', {
+            orderId: parseInt(orderId),
+            status,
+        });
+        // Kafe sahibi panelini güncelle (ready/delivered gelince sıradan çıkar)
+        notifyCafe(io, cafeId, 'order_updated', { orderId: parseInt(orderId), status });
 
         res.json({ message: 'Sipariş durumu güncellendi', orderId: parseInt(orderId), status });
     } catch (err) {
@@ -170,7 +180,7 @@ router.patch('/orders/:orderId/items/:itemId/cancel', authMiddleware, requireRol
         const { reason } = req.body;
 
         const order = db.prepare(
-            'SELECT id, total_amount FROM orders WHERE id = ? AND cafe_id = ?'
+            'SELECT id, user_id, total_amount FROM orders WHERE id = ? AND cafe_id = ?'
         ).get(orderId, cafeId);
 
         if (!order) {
@@ -178,7 +188,9 @@ router.patch('/orders/:orderId/items/:itemId/cancel', authMiddleware, requireRol
         }
 
         const item = db.prepare(
-            "SELECT id, line_total FROM order_items WHERE id = ? AND order_id = ? AND status = 'active'"
+            `SELECT oi.id, oi.line_total, p.name AS productName
+             FROM order_items oi JOIN products p ON p.id = oi.product_id
+             WHERE oi.id = ? AND oi.order_id = ? AND oi.status = 'active'`
         ).get(itemId, orderId);
 
         if (!item) {
@@ -202,6 +214,15 @@ router.patch('/orders/:orderId/items/:itemId/cancel', authMiddleware, requireRol
         });
 
         const newTotal = cancelTransaction();
+
+        // Kullanıcıya iptal bildirimi gönder
+        const io = req.app.get('io');
+        notifyUser(io, order.user_id, 'order_item_cancelled', {
+            orderId: parseInt(orderId),
+            itemName: item.productName,
+            refundAmount: item.line_total,
+            reason: reason || '',
+        });
 
         res.json({
             message: 'Ürün iptal edildi',
