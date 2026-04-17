@@ -1,4 +1,4 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -30,6 +30,7 @@ export class ChatbotComponent {
     messages = signal<ChatMessage[]>([]);
     userInput = '';
     activeMode = signal<ChatMode>('assistant');
+    @ViewChild('scrollMe') private scrollContainer?: ElementRef;
 
     private lastUserId: number | null = null;
     private readonly STORAGE_KEY = 'campuscafe_chat_history';
@@ -54,6 +55,12 @@ export class ChatbotComponent {
                     this.activeMode.set('recommend');
                 }
             }
+        });
+
+        // Mesajlar her güncellendiğinde en aşağı kaydır
+        effect(() => {
+            this.messages(); // Signal izle
+            this.scrollToBottom();
         });
     }
 
@@ -173,6 +180,16 @@ export class ChatbotComponent {
     addAIResponse(text: string) {
         this.messages.update(m => [...m, { role: 'ai', text, html: this.toSafeHtml(text), timestamp: new Date() }]);
         this.saveHistory();
+        this.scrollToBottom();
+    }
+
+    private scrollToBottom(): void {
+        setTimeout(() => {
+            if (this.scrollContainer) {
+                const element = this.scrollContainer.nativeElement;
+                element.scrollTop = element.scrollHeight;
+            }
+        }, 100);
     }
 
     formatTime(date: Date): string {
