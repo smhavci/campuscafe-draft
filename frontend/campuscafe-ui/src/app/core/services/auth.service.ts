@@ -106,6 +106,15 @@ export class AuthService {
         return t ? { Authorization: `Bearer ${t}` } : {};
     }
 
+    /** Socket'ten gelen yıldız güncellemesini signal'a ve localStorage'a yaz */
+    updateStars(total: number): void {
+        const user = this.currentUser();
+        if (!user) return;
+        const updated = { ...user, stars: total };
+        this.currentUser.set(updated);
+        localStorage.setItem('user', JSON.stringify(updated));
+    }
+
     private saveAuth(res: AuthResponse): void {
         this.token.set(res.token);
         this.currentUser.set(res.user);

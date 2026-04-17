@@ -1,5 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { SocketService } from './socket.service';
+import { AuthService } from './auth.service';
 
 export interface AppNotification {
     id: string;
@@ -23,7 +24,7 @@ export class NotificationService {
     readonly toasts = this._toasts.asReadonly();
     readonly unreadCount = computed(() => this._notifications().filter(n => !n.read).length);
 
-    constructor(private socket: SocketService) {
+    constructor(private socket: SocketService, private auth: AuthService) {
         this.listenToSocketEvents();
     }
 
@@ -41,6 +42,8 @@ export class NotificationService {
         });
 
         this.socket.on<{ amount: number; total: number }>('stars_earned').subscribe(data => {
+            // Navbar ve tüm signal bağlantılarını anında güncelle
+            this.auth.updateStars(data.total);
             this.add({
                 type: 'stars_earned',
                 title: `+${data.amount} Yıldız Kazandın!`,

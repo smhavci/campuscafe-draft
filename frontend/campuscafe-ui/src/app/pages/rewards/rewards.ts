@@ -1,8 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { LoyaltyService, LoyaltyCard, CoffeeOption, LoyaltyStatus, StarHistory } from '../../core/services/loyalty.service';
 import { AuthService } from '../../core/services/auth.service';
+import { SocketService } from '../../core/services/socket.service';
 
 @Component({
     selector: 'app-rewards',
@@ -11,7 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
     templateUrl: './rewards.html',
     styleUrl: './rewards.css'
 })
-export class Rewards implements OnInit {
+export class Rewards implements OnInit, OnDestroy {
     cards = signal<LoyaltyCard[]>([]);
     starStatus = signal<LoyaltyStatus | null>(null);
     starHistory = signal<StarHistory[]>([]);
@@ -26,9 +28,12 @@ export class Rewards implements OnInit {
     pickerLoading = signal(false);
     redeemLoading = signal(false);
 
+    private sub?: Subscription;
+
     constructor(
         private loyaltyService: LoyaltyService,
-        public authService: AuthService
+        public authService: AuthService,
+        private socket: SocketService,
     ) { }
 
     ngOnInit(): void {
@@ -37,6 +42,17 @@ export class Rewards implements OnInit {
         } else {
             this.loading.set(false);
         }
+
+        // Yıldız kazanılınca sayfa açıksa status'u canlı yenile
+        this.sub = this.socket.on<{ amount: number; total: number }>('stars_earned')
+            .subscribe(() => {
+                this.loyaltyService.getStatus().subscribe(s => this.starStatus.set(s));
+                this.loyaltyService.getHistory().subscribe(h => this.starHistory.set(h));
+            });
+    }
+
+    ngOnDestroy(): void {
+        this.sub?.unsubscribe();
     }
 
     loadLoyaltyData(): void {
