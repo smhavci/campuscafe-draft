@@ -118,7 +118,7 @@ async def create_campaign(request: InventoryMonitorRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/chat/graph")
+@app.post("/graph")
 async def chat_with_graph(request: GraphChatRequest):
     """LangGraph tabanlı akıllı asistan ile görüşme."""
     try:

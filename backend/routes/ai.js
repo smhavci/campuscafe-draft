@@ -32,7 +32,7 @@ router.post('/chat/:mode', async (req, res) => {
                 endpoint = '/chat/campaign';
                 break;
             case 'graph':
-                endpoint = '/chat/graph';
+                endpoint = '/graph';
                 break;
             default:
                 return res.status(400).json({ error: 'Invalid AI mode' });
