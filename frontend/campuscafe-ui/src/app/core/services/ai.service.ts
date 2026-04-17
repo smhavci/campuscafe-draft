@@ -34,4 +34,10 @@ export class AIService {
             cafe_id: cafeId
         });
     }
+
+    askGraph(message: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/chat/graph`, {
+            message
+        });
+    }
 }

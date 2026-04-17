@@ -7,7 +7,7 @@ import { AIService } from '../../core/services/ai.service';
 import { finalize } from 'rxjs/operators';
 import { marked } from 'marked';
 
-type ChatMode = 'recommend' | 'preorder' | 'inventory' | 'campaign';
+type ChatMode = 'assistant' | 'recommend' | 'preorder' | 'inventory' | 'campaign';
 
 interface ChatMessage {
     role: 'user' | 'ai';
@@ -29,7 +29,7 @@ export class ChatbotComponent {
     isLoading = signal(false);
     messages = signal<ChatMessage[]>([]);
     userInput = '';
-    activeMode = signal<ChatMode>('recommend');
+    activeMode = signal<ChatMode>('assistant');
 
     private lastUserId: number | null = null;
     private readonly STORAGE_KEY = 'campuscafe_chat_history';
@@ -59,6 +59,7 @@ export class ChatbotComponent {
 
     get studentModes() {
         return [
+            { id: 'assistant' as ChatMode, icon: '🤖', label: 'Akıllı Asistan' },
             { id: 'recommend' as ChatMode, icon: '🍽️', label: 'Yemek Önerisi' },
             { id: 'preorder' as ChatMode, icon: '⏰', label: 'Ön Sipariş' },
         ];
@@ -77,6 +78,7 @@ export class ChatbotComponent {
 
     get placeholder(): string {
         switch (this.activeMode()) {
+            case 'assistant': return 'Sorunu buraya yaz (ör: merhaba veya 50 TL bütçem var)...';
             case 'recommend': return 'Bütçeni yaz (ör: 50 TL)...';
             case 'preorder': return 'Ön sipariş hakkında sor...';
             case 'inventory': return 'Envanter hakkında sor...';
@@ -101,7 +103,7 @@ export class ChatbotComponent {
         if (role === 'cafeOwner') {
             text = 'Merhaba Patron! 👋 Mod seçerek envanter analizi veya kampanya önerisi alabirsin.';
         } else {
-            text = 'Merhaba! 👋 Sana yardımcı olabilirim. Yemek önerisi için bütçeni yaz, veya ön sipariş modunu seç!';
+            text = 'Merhaba! 👋 Ben Akıllı Asistanın. Sana her konuda yardımcı olabilirim.';
         }
         this.messages.update(m => [...m, { role: 'ai', text, html: this.toSafeHtml(text), timestamp: new Date() }]);
     }
@@ -118,6 +120,15 @@ export class ChatbotComponent {
         const user = this.auth.currentUser();
 
         switch (mode) {
+            case 'assistant':
+                this.ai.askGraph(text)
+                    .pipe(finalize(() => this.isLoading.set(false)))
+                    .subscribe({
+                        next: (res: any) => this.addAIResponse(res.response),
+                        error: () => this.addAIResponse('Üzgünüm, şu an cevap veremiyorum.')
+                    });
+                break;
+
             case 'recommend':
                 this.ai.recommendMeal(text)
                     .pipe(finalize(() => this.isLoading.set(false)))
