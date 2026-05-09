@@ -1,50 +1,50 @@
-# CampusCafe — MCP (Model Context Protocol) Entegrasyon Raporu
+# CampusCafe — MCP (Model Context Protocol) Integration Report
 
 **GitHub:** https://github.com/smhavci/campuscafe-draft
 
 ---
 
-## 1. Proje Genel Bakışı
+## 1. Project Overview
 
-CampusCafe, üniversite kafeterya yönetimi için geliştirilmiş full-stack bir uygulamadır. Angular tabanlı kullanıcı arayüzü, Node.js/Express backend, SQLite veritabanı ve yapay zeka modülünden oluşmaktadır. AI modülü; **LangGraph** (orkestrasyon), **CrewAI** (ajan yönetimi) ve **MCP** (araç protokolü) teknolojilerini bir arada kullanmaktadır.
+CampusCafe is a full-stack application built for university cafeteria management. It consists of an Angular-based user interface, a Node.js/Express backend, an SQLite database, and an AI module. The AI module combines three technologies: **LangGraph** (orchestration), **CrewAI** (agent management), and **MCP** (tool protocol).
 
 ---
 
-## 2. MCP (Model Context Protocol) Nedir?
+## 2. What is MCP (Model Context Protocol)?
 
-**Model Context Protocol (MCP)**, Anthropic tarafından 2024 yılında yayımlanan açık bir standarttır. AI modellerinin dış veri kaynaklarına ve araçlara **standart bir protokol** (JSON-RPC 2.0) üzerinden bağlanmasını sağlar.
+**Model Context Protocol (MCP)** is an open standard published by Anthropic in 2024. It enables AI models to connect to external data sources and tools through a **standard protocol** (JSON-RPC 2.0).
 
-### Temel Fikir
+### Core Idea
 
-MCP'den önce her AI uygulaması kendi araçlarını kendine özgü biçimde tanımlıyordu. MCP bu sorunu şu prensiple çözer:
+Before MCP, every AI application defined its tools in its own proprietary way. MCP solves this problem with one principle:
 
-> **"Araç tanımı (tool definition) araç kullanımından (tool use) ayrılmalıdır."**
+> **"Tool definition must be separated from tool use."**
 
 ```
-Geleneksel Yaklaşım:
-   AI Model  ←→  Uygulama kodu (araç burada gömülü)
+Traditional Approach:
+   AI Model  ←→  Application code (tool embedded here)
 
-MCP ile:
-   AI Model  →  MCP Client  →  MCP Server  →  Gerçek araç
+With MCP:
+   AI Model  →  MCP Client  →  MCP Server  →  Actual tool
 ```
 
-### MCP'nin Faydaları
+### Benefits of MCP
 
-| Özellik | Geleneksel | MCP |
+| Feature | Traditional | MCP |
 |---|---|---|
-| Araç paylaşımı | Sadece aynı framework | Tüm MCP-uyumlu istemciler |
-| Protokol | Her uygulama farklı | JSON-RPC 2.0 standardı |
-| Bağımsızlık | Araç koda gömülü | Server bağımsız çalışır |
-| Transport | Yok (in-process) | stdio / SSE / HTTP |
+| Tool sharing | Same framework only | Any MCP-compatible client |
+| Protocol | Each app differs | JSON-RPC 2.0 standard |
+| Decoupling | Tool is embedded in code | Server runs independently |
+| Transport | None (in-process) | stdio / SSE / HTTP |
 
 ---
 
-## 3. CampusCafe Projesinde MCP Mimarisi
+## 3. MCP Architecture in the CampusCafe Project
 
-### 3.1 Veri Akışı
+### 3.1 Data Flow
 
 ```
-Kullanıcı (Angular)
+User (Angular UI)
         │  HTTP
         ▼
 Node.js Backend (:3000)
@@ -68,19 +68,19 @@ FastAPI + LangGraph (:8000)
                     OpenWeatherMap API
 ```
 
-### 3.2 MCP'nin Projedeki Rolü
+### 3.2 Role of MCP in the Project
 
-Kullanıcı yemek önerisi istediğinde sistem şunları yapar:
+When a user asks for a food recommendation, the system does the following:
 
-1. **LangGraph** isteği `recommendation_node`'a yönlendirir
-2. Node, **MCP client** (`langchain-mcp-adapters`) üzerinden MCP server'a bağlanır
-3. MCP server `get_current_weather` aracını çalıştırır → OpenWeatherMap'ten veri çeker
-4. Hava durumu verisi (sıcaklık, nem, açıklama) node'a döner
-5. CrewAI, hava durumunu da dikkate alarak kişiselleştirilmiş öneri üretir
+1. **LangGraph** routes the request to `recommendation_node`
+2. The node connects to the MCP server via the **MCP client** (`langchain-mcp-adapters`)
+3. The MCP server executes the `get_current_weather` tool → fetches data from OpenWeatherMap
+4. Weather data (temperature, humidity, description) is returned to the node
+5. **CrewAI** generates a personalized food recommendation that accounts for the current weather
 
 ---
 
-## 4. Kodun İncelenmesi
+## 4. Code Walkthrough
 
 ### 4.1 MCP Server (`ai_service/mcp_server.py`)
 
@@ -91,7 +91,7 @@ mcp = FastMCP("campuscafe-weather", port=8001)
 
 @mcp.tool()
 def get_current_weather(city: str = "Ankara") -> str:
-    """Anlık hava durumu — sıcaklık, nem, rüzgar ve öneri ipucu döner."""
+    """Returns current weather — temperature, humidity, wind, and a recommendation tip."""
     response = requests.get(
         "https://api.openweathermap.org/data/2.5/weather",
         params={"q": city, "appid": API_KEY, "units": "metric", "lang": "tr"},
@@ -100,32 +100,32 @@ def get_current_weather(city: str = "Ankara") -> str:
     temp = round(data["main"]["temp"])
 
     if temp >= 28:
-        tip = "Soğuk içecekler ve hafif yemekler öner."
+        tip = "Hot weather — recommend cold drinks and light meals."
     elif temp <= 10:
-        tip = "Sıcak içecekler ve doyurucu yemekler öner."
+        tip = "Cold weather — recommend hot drinks and hearty meals."
     else:
-        tip = "Dengeli öneriler yap."
+        tip = "Mild weather — recommend balanced options."
 
-    return f"{city}: {data['weather'][0]['description']}, {temp}°C. {tip}"
+    return f"{city}: {data['weather'][0]['description']}, {temp}°C. Tip: {tip}"
 
 if __name__ == "__main__":
-    mcp.run(transport="sse")   # HTTP/SSE — web uygulaması için uygun
+    mcp.run(transport="sse")   # HTTP/SSE — suitable for web applications
 ```
 
-**Önemli noktalar:**
-- `@mcp.tool()` dekoratörü fonksiyonu otomatik olarak JSON-RPC tool'una dönüştürür
-- `transport="sse"` seçimi: web uygulaması olduğu için HTTP/SSE tercih edildi (stdio yerine)
-- Port `8001` — FastAPI `8000` ile çakışmaz
-- Hava durumuna göre otomatik öneri ipucu üretilir
+**Key points:**
+- The `@mcp.tool()` decorator automatically converts the function into a JSON-RPC tool
+- `transport="sse"` is chosen because this is a web application (not a CLI tool)
+- Port `8001` does not conflict with FastAPI on port `8000`
+- The server generates a weather-based recommendation tip automatically
 
-### 4.2 LangGraph Tarafındaki MCP İstemcisi (`ai_service/src/campuscafe_crew/nodes.py`)
+### 4.2 MCP Client on the LangGraph Side (`ai_service/src/campuscafe_crew/nodes.py`)
 
 ```python
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
 async def _get_weather_from_mcp() -> str:
-    """MCP server'dan anlık hava durumu çeker.
-    Server çalışmıyorsa sessizce fallback döner — sistemi bozmaz.
+    """Fetches live weather from the MCP server.
+    Returns an empty string gracefully if the server is unavailable.
     """
     mcp_url = os.getenv("MCP_SERVER_URL", "http://localhost:8001/sse")
     city = os.getenv("CAMPUS_CITY", "Ankara")
@@ -138,108 +138,101 @@ async def _get_weather_from_mcp() -> str:
         result = await weather_tool.ainvoke({"city": city})
         return str(result)
     except Exception as e:
-        print(f"⚠️  MCP bağlantısı kurulamadı ({e}) — hava durumu olmadan devam")
+        print(f"⚠️  MCP connection failed ({e}) — continuing without weather")
         return ""
 ```
 
-**Önemli noktalar:**
-- `MultiServerMCPClient`: birden fazla MCP server'a bağlanabilir (genişletilebilir)
-- `client.get_tools()`: server'dan mevcut araç listesini JSON-RPC ile çeker
-- `ainvoke`: async çağrı — LangGraph'ın async yürütme modeliyle uyumlu
-- `try/except`: MCP server çalışmıyorsa sistem durmuyor, boş string dönerek devam ediyor
+**Key points:**
+- `MultiServerMCPClient`: supports multiple MCP servers simultaneously (extensible)
+- `client.get_tools()`: fetches the available tool list from the server via JSON-RPC
+- `ainvoke`: async call — compatible with LangGraph's async execution model
+- `try/except`: if the MCP server is down, the system continues without crashing
 
-### 4.3 `recommendation_node`'da Entegrasyon
+### 4.3 Integration Inside `recommendation_node`
 
 ```python
 async def recommendation_node(state: GraphState) -> dict:
-    # MCP'den hava durumu al
+    # Fetch weather from MCP
     weather_context = await _get_weather_from_mcp()
 
-    # CrewAI'ya hem kullanıcı geçmişi hem hava durumu veriliyor
+    # CrewAI receives both user order history and live weather
     crew = CampusCafeCrew().recommendation_crew()
     result = crew.kickoff(inputs={
-        "budget":              str(params.get("budget") or "belirtilmemiş"),
-        "dietary_preferences": params.get("dietary_preferences") or "yok",
+        "budget":              str(params.get("budget") or "not specified"),
+        "dietary_preferences": params.get("dietary_preferences") or "none",
         "user_history":        state.get("user_context"),
         "user_input":          user_input,
-        "weather_context":     weather_context or "Hava durumu bilgisi mevcut değil.",
+        "weather_context":     weather_context or "Weather data unavailable.",
     })
 ```
 
 ---
 
-## 5. Transport Seçimi: stdio vs SSE
+## 5. Transport Selection: stdio vs SSE
 
 | | stdio | SSE (HTTP) |
 |---|---|---|
-| Çalışma şekli | Alt process stdin/stdout | HTTP GET /sse stream |
-| Uygun olduğu yer | Claude Desktop, CLI araçları | Web uygulamaları |
-| Birden fazla client | Hayır | Evet |
-| Bu projede | Uygun değil | **Seçilen yöntem** |
+| How it works | Subprocess stdin/stdout | HTTP GET /sse stream |
+| Best suited for | Claude Desktop, CLI tools | Web applications |
+| Multiple clients | No | Yes |
+| In this project | Not suitable | **Selected** |
 
-CampusCafe bir web uygulaması olduğu için SSE transport tercih edildi. MCP server `http://localhost:8001/sse` adresinde çalışır; hem LangGraph hem de potansiyel olarak başka bir client aynı anda bağlanabilir.
+CampusCafe is a web application, so SSE transport was chosen. The MCP server runs at `http://localhost:8001/sse`; both LangGraph and any future client can connect simultaneously.
 
 ---
 
-## 6. Çalıştırma ve Canlı Gösterim
+## 6. Running & Live Demo
 
-### Adım 1: MCP Server'ı Başlat
+### Step 1: Start the MCP Server
 
 ```bash
 cd ai_service
 python3 mcp_server.py
 ```
 
-Çıktı:
+Expected output:
 ```
 ====================================================
-  CampusCafe MCP Server başlatılıyor
-  Şehir: Antalya
-  API Key: ✅ Tanımlı
-  Adres: http://localhost:8001/sse
+  CampusCafe MCP Server starting
+  City: Antalya
+  API Key: ✅ Defined
+  Address: http://localhost:8001/sse
 ====================================================
 ```
 
-### Adım 2: AI Service'i Başlat
+### Step 2: Start the AI Service
 
 ```bash
 cd ai_service
 uvicorn src.campuscafe_crew.api:app --port 8000
 ```
 
-### Adım 3: Chatbot'a Yemek Önerisi İste
+### Step 3: Ask the Chatbot for a Food Recommendation
 
-Kullanıcı chatbot'a yazar: _"Bugün ne yesem, bütçem 80 TL"_
+User types in the chatbot: _"What should I eat today, my budget is 80 TL"_
 
-Terminal çıktısında şu adımları görmek mümkündür:
+The terminal shows the following sequence:
 
 ```
 [LangGraph] ▶ intent_classifier
-[LangGraph]   Mesaj: Bugün ne yesem, bütçem 80 TL
+[LangGraph]   Message: What should I eat today, my budget is 80 TL
 [LangGraph]   Intent → RECOMMENDATION
 [LangGraph] ▶ param_extractor
-[LangGraph]   Parametreler → {"budget": 80, ...}
-[LangGraph] ▶ user_context  (sipariş geçmişi çekiliyor)
-[LangGraph] ▶ recommendation_handler  (CrewAI + MCP devreye giriyor)
-[MCP] get_current_weather çağrıldı → şehir: Antalya
-[MCP] Hava durumu alındı: Antalya: açık hava, 27°C... Soğuk içecekler öner.
-🌤️  MCP hava durumu: Antalya: açık hava, 27°C...
-```
-
-### Adım 4: Araç Listesini Doğrula (Opsiyonel)
-
-MCP server çalışırken araç listesi şu endpoint'ten görülebilir:
-```
-GET http://localhost:8001/sse
+[LangGraph]   Parameters → {"budget": 80, ...}
+[LangGraph] ▶ user_context  (fetching order history)
+[LangGraph] ▶ recommendation_handler  (CrewAI + MCP activated)
+[MCP] get_current_weather called → city: Antalya
+[MCP] Weather received: Antalya: clear sky, 27°C... Recommend cold drinks.
+🌤️  MCP weather: Antalya: clear sky, 27°C...
 ```
 
 ---
 
-## 7. MCP Protokol Mesajları (JSON-RPC 2.0)
+## 7. MCP Protocol Messages (JSON-RPC 2.0)
 
-Perde arkasında şu mesajlar geçer:
+These are the actual messages exchanged behind the scenes:
 
-**Client → Server (araç listesi isteği):**
+**Client → Server (list tools request):**
 ```json
 {
   "jsonrpc": "2.0",
@@ -249,7 +242,7 @@ Perde arkasında şu mesajlar geçer:
 }
 ```
 
-**Server → Client (araç listesi yanıtı):**
+**Server → Client (tool list response):**
 ```json
 {
   "jsonrpc": "2.0",
@@ -257,11 +250,11 @@ Perde arkasında şu mesajlar geçer:
   "result": {
     "tools": [{
       "name": "get_current_weather",
-      "description": "Belirtilen şehrin anlık hava durumunu döndürür...",
+      "description": "Returns the current weather for a given city...",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "city": {"type": "string", "description": "Şehir adı"}
+          "city": {"type": "string", "description": "City name"}
         }
       }
     }]
@@ -269,7 +262,7 @@ Perde arkasında şu mesajlar geçer:
 }
 ```
 
-**Client → Server (araç çağrısı):**
+**Client → Server (tool call):**
 ```json
 {
   "jsonrpc": "2.0",
@@ -282,7 +275,7 @@ Perde arkasında şu mesajlar geçer:
 }
 ```
 
-**Server → Client (sonuç):**
+**Server → Client (result):**
 ```json
 {
   "jsonrpc": "2.0",
@@ -290,7 +283,7 @@ Perde arkasında şu mesajlar geçer:
   "result": {
     "content": [{
       "type": "text",
-      "text": "Antalya hava durumu: açık hava, sıcaklık 27°C, nem %45. Öneri: Soğuk içecekler öner."
+      "text": "Antalya: clear sky, temperature 27°C, humidity 45%. Tip: Recommend cold drinks and light meals."
     }]
   }
 }
@@ -298,35 +291,35 @@ Perde arkasında şu mesajlar geçer:
 
 ---
 
-## 8. MCP'nin Sağladığı Değer (Önceki vs Sonraki)
+## 8. Before vs. After MCP
 
-### Önceki Durum (MCP Olmadan)
-
-```
-recommendation_node
-    └── hava durumu YOK
-        └── CrewAI → genel öneri (mevsim bağımsız)
-```
-
-- Hava durumu verisi sisteme entegre değildi
-- Yaz ortasında da sıcak çorba önerebiliyordu
-- Öneri kalitesi kullanıcı bağlamıyla sınırlıydı
-
-### MCP Sonrası
+### Before (without MCP)
 
 ```
 recommendation_node
-    ├── MCP Client → MCP Server → OpenWeatherMap → 27°C, açık hava
-    └── CrewAI → hava durumuna uygun öneri (soğuk içecekler, hafif salata)
+    └── NO weather data
+        └── CrewAI → generic recommendation (season-agnostic)
 ```
 
-- Gerçek zamanlı hava durumu önerileri etkiliyor
-- MCP server değişse (farklı hava servisi) — node kodu değişmez
-- İleride farklı node'lar da aynı server'a bağlanabilir
+- Weather was not integrated into the system
+- The AI could recommend hot soup in the middle of summer
+- Recommendation quality was limited to user history alone
+
+### After MCP
+
+```
+recommendation_node
+    ├── MCP Client → MCP Server → OpenWeatherMap → 27°C, clear sky
+    └── CrewAI → weather-aware recommendation (cold drinks, light salad)
+```
+
+- Real-time weather now influences every food recommendation
+- If the MCP server changes (different weather provider) — node code stays the same
+- Other nodes can connect to the same server in the future without any changes
 
 ---
 
-## 9. Konfigürasyon (`.env`)
+## 9. Configuration (`.env`)
 
 ```env
 # MCP Server
@@ -337,50 +330,50 @@ MCP_SERVER_URL=http://localhost:8001/sse
 
 ---
 
-## 10. Bağımlılıklar (`pyproject.toml`)
+## 10. Dependencies (`pyproject.toml`)
 
 ```toml
-"mcp[cli]>=1.3.0",              # MCP server (FastMCP)
-"langchain-mcp-adapters>=0.1.0", # LangGraph için MCP client
+"mcp[cli]>=1.3.0",               # MCP server (FastMCP)
+"langchain-mcp-adapters>=0.1.0",  # MCP client for LangGraph
 ```
 
 ---
 
-## 11. Proje Dosya Yapısı
+## 11. Project File Structure
 
 ```
 campuscafe-draft/
 ├── ai_service/
-│   ├── mcp_server.py                    ← MCP Server (hava durumu aracı)
-│   ├── pyproject.toml                   ← MCP bağımlılıkları
-│   ├── .env                             ← API anahtarları ve MCP URL
+│   ├── mcp_server.py                    ← MCP Server (weather tool)
+│   ├── pyproject.toml                   ← MCP dependencies
+│   ├── .env                             ← API keys and MCP URL
 │   └── src/campuscafe_crew/
 │       ├── api.py                       ← FastAPI endpoints
-│       ├── graph.py                     ← LangGraph akış tanımı
-│       ├── nodes.py                     ← _get_weather_from_mcp() burada
-│       ├── crew.py                      ← CrewAI agent tanımları
+│       ├── graph.py                     ← LangGraph flow definition
+│       ├── nodes.py                     ← _get_weather_from_mcp() lives here
+│       ├── crew.py                      ← CrewAI agent definitions
 │       └── tools/
-│           └── custom_tool.py           ← CrewAI araçları (menü, sipariş, stok)
+│           └── custom_tool.py           ← CrewAI tools (menu, orders, inventory)
 ├── backend/                             ← Node.js/Express API
 ├── frontend/campuscafe-ui/              ← Angular UI
 └── docs/
-    ├── mcp_report.md                    ← Bu rapor
-    └── mcp_implementation_plan.md       ← Teknik plan
+    ├── mcp_report.md                    ← This report
+    └── mcp_implementation_plan.md       ← Technical design notes
 ```
 
 ---
 
-## 12. Özet
+## 12. Summary
 
-CampusCafe projesinde MCP şu şekilde kullanılmaktadır:
+MCP is used in the CampusCafe project as follows:
 
-1. **`mcp_server.py`** adresinde bağımsız bir MCP server çalışır (port 8001, SSE transport)
-2. Bu server `get_current_weather` adında bir araç sunar — OpenWeatherMap API'sinden gerçek zamanlı hava durumu çeker
-3. LangGraph'ın `recommendation_node`'u, `langchain-mcp-adapters` kütüphanesi aracılığıyla bu server'a JSON-RPC mesajları göndererek hava durumunu sorgular
-4. Dönen hava verisi, CrewAI'nın yemek önerisi üretmesinde bağlam olarak kullanılır
-5. MCP server çalışmıyorsa sistem kesintisiz çalışmaya devam eder (graceful fallback)
+1. An independent MCP server runs at `mcp_server.py` (port 8001, SSE transport)
+2. This server exposes a tool called `get_current_weather` — it fetches live weather data from the OpenWeatherMap API
+3. LangGraph's `recommendation_node` sends JSON-RPC messages to this server via the `langchain-mcp-adapters` library to query the current weather
+4. The returned weather data is passed as context to CrewAI, which uses it when generating food recommendations
+5. If the MCP server is unavailable, the system continues operating without interruption (graceful fallback)
 
-Bu mimari sayesinde hava durumu servisi **tamamen bağımsız** bir bileşen haline gelmiştir — değiştirilebilir, farklı client'lar tarafından kullanılabilir ve LangGraph akış kodunu etkilemeden güncellenebilir.
+This architecture makes the weather service a **fully independent component** — it can be swapped out, used by multiple clients, and updated without touching the LangGraph flow code.
 
 ---
 
