@@ -74,6 +74,7 @@ class MenuSearchTool(BaseTool):
             return result
 
         except requests.RequestException as e:
+            print(f"❌ MenuSearchTool hatası: {e}")
             return f"Error fetching menu: {str(e)}"
 
 
@@ -128,6 +129,7 @@ class OrderHistoryTool(BaseTool):
             return result
 
         except requests.RequestException as e:
+            print(f"❌ OrderHistoryTool hatası: {e}")
             return f"Error fetching order history: {str(e)}"
 
 
@@ -194,6 +196,7 @@ class CampaignCreatorTool(BaseTool):
             )
 
         except requests.RequestException as e:
+            print(f"❌ CampaignCreatorTool hatası: {e}")
             return f"Error creating campaign: {str(e)}"
 
 
@@ -258,4 +261,5 @@ class InventoryCheckerTool(BaseTool):
             return result
 
         except requests.RequestException as e:
+            print(f"❌ InventoryCheckerTool hatası: {e}")
             return f"Error checking inventory: {str(e)}"

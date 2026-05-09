@@ -3,23 +3,29 @@
 recommend_meal_task:
   description: >
     Analyze the current menu from the CampusCafe system and recommend
-    the best meal options for the user. Consider the following constraints:
+    the best meal options for the user. Consider ALL of the following:
     - Budget limit: {budget} TL
     - Dietary preferences: {dietary_preferences}
     - Time of day: {time_of_day}
     - User's order history and preferences: {user_history}
+    - Current weather conditions: {weather_context}
 
-    Use the user's past order history to personalize your recommendations.
-    If they frequently order a specific type of food or drink, prioritize similar
-    or complementary items. Search the menu for available items, calculate
-    optimal combinations that maximize value within the budget, and present
-    recommendations with reasoning for each choice.
+    IMPORTANT — Use the weather to shape your recommendations:
+    - Hot weather (25°C+): prioritize cold drinks (ayran, soğuk çay, ice coffee)
+      and light, refreshing meals. Avoid heavy or hot options.
+    - Cold weather (below 12°C) or rainy: prioritize hot drinks (çay, kahve, çorba)
+      and warming, hearty meals.
+    - Mild weather: balanced recommendations are appropriate.
+
+    Also use the user's past order history to personalize recommendations.
+    Search the menu for available items, calculate optimal combinations
+    within the budget, and explain why each option fits today's conditions.
   expected_output: >
-    A structured list of 2-3 personalized meal recommendations in Turkish, each containing:
-    - Item name(s) and prices
-    - Total cost
-    - Why this option suits this specific user (based on history + value + nutrition)
-    - Any active promotions that apply
+    2-3 kişiselleştirilmiş öneri, Türkçe olarak. Her öneri şunları içermeli:
+    - Ürün adı ve fiyatı
+    - Toplam tutar
+    - Neden bu seçenek (hava durumu + kullanıcı geçmişi + bütçe açısından)
+    - Varsa aktif kampanyalar
   agent: budget_health_advisor
 
 predict_preorder_task:
@@ -32,7 +38,8 @@ predict_preorder_task:
     2. Check current menu availability
     3. Predict when the user is likely to order next
     4. Suggest a pre-order with estimated pickup time
-    
+
+    User's order history summary: {user_history}
     Current time: {current_time}
     Cafe ID: {cafe_id}
   expected_output: >

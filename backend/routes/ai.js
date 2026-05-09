@@ -16,14 +16,34 @@ router.post('/graph', async (req, res) => {
         console.log(`🤖 Proxying LangGraph request...`);
         const response = await axios.post(`${AI_SERVICE_URL}/graph`, req.body, {
             headers: { 'Content-Type': 'application/json' },
-            timeout: 60000
+            timeout: 120000
         });
         res.json(response.data);
     } catch (error) {
-        console.error('❌ AI Service Error:', error.message);
+        const detail = error.response?.data?.detail || error.message;
+        console.error('❌ LangGraph Error:', detail);
         res.status(error.response?.status || 500).json({
             error: 'AI servisi ile iletişim kurulurken bir hata oluştu.',
-            details: error.response?.data?.detail || error.message
+            details: detail
+        });
+    }
+});
+
+// Kampanya Human-in-the-Loop onay akışı
+router.post('/graph/resume', async (req, res) => {
+    try {
+        console.log(`▶️  Proxying campaign resume — thread: ${req.body.thread_id}, decision: ${req.body.decision}`);
+        const response = await axios.post(`${AI_SERVICE_URL}/graph/resume`, req.body, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 120000
+        });
+        res.json(response.data);
+    } catch (error) {
+        const detail = error.response?.data?.detail || error.message;
+        console.error('❌ Campaign Resume Error:', detail);
+        res.status(error.response?.status || 500).json({
+            error: 'Kampanya onayı işlenirken bir hata oluştu.',
+            details: detail
         });
     }
 });
@@ -63,10 +83,11 @@ router.post('/chat/:mode', async (req, res) => {
 
         res.json(response.data);
     } catch (error) {
-        console.error('❌ AI Service Error:', error.message);
+        const detail = error.response?.data?.detail || error.message;
+        console.error(`❌ AI Service Error [${mode}]:`, detail);
         res.status(error.response?.status || 500).json({
             error: 'AI servisi ile iletişim kurulurken bir hata oluştu.',
-            details: error.response?.data?.detail || error.message
+            details: detail
         });
     }
 });

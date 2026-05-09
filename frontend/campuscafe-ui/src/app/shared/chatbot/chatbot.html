@@ -1,57 +1,163 @@
-<div class="chatbot-container" [class.open]="isOpen()">
-    <!-- Otomatik Mesaj (Hover) -->
+<div class="chatbot-container">
+
+    <!-- Hover Tooltip -->
     <div class="hover-tip" *ngIf="isHovered() && !isOpen()">
         {{ hoverMessage }}
     </div>
 
-    <!-- Chat Balonu (Kapalıyken) -->
-    <button 
-        class="chat-trigger" 
+    <!-- FAB Butonu -->
+    <button
+        class="chat-trigger"
+        [class.is-open]="isOpen()"
         (click)="toggleChat()"
         (mouseenter)="isHovered.set(true)"
-        (mouseleave)="isHovered.set(false)">
-        <span class="icon">🤖</span>
+        (mouseleave)="isHovered.set(false)"
+        aria-label="AI Asistan">
+        <svg *ngIf="!isOpen()" class="trigger-icon" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="currentColor" opacity="0"/>
+            <path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12l-2-2.12L9 14V5h6v9l-2-2.12z" fill="none"/>
+            <circle cx="12" cy="12" r="10" fill="white" opacity="0.15"/>
+            <path d="M9 9h6M9 12h6M9 15h4" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="17" cy="7" r="1" fill="white" opacity="0.8"/>
+        </svg>
+        <svg *ngIf="isOpen()" class="trigger-icon close-icon" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
     </button>
 
-    <!-- Chat Penceresi (Açıkken) -->
+    <!-- Chat Penceresi -->
     <div class="chat-window" *ngIf="isOpen()">
+
+        <!-- Header -->
         <div class="chat-header">
-            <h3>Campus AI Asistan</h3>
-            <button (click)="toggleChat()" class="close-btn">×</button>
+            <div class="header-left">
+                <div class="ai-badge">
+                    <span class="ai-badge-icon">✦</span>
+                </div>
+                <div class="header-info">
+                    <span class="header-title">CampusCafe AI</span>
+                    <span class="header-status">
+                        <span class="status-dot"></span>
+                        Çevrimiçi
+                    </span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" (click)="clearHistory()" title="Sohbeti Temizle" *ngIf="hasMessages">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="icon-btn close-header-btn" (click)="toggleChat()" title="Kapat">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
-        <!-- Mode Selector -->
-        <div class="mode-selector">
-            <button *ngFor="let mode of availableModes" 
-                    class="mode-btn" 
-                    [class.mode-active]="activeMode() === mode.id"
-                    (click)="setMode(mode.id)">
-                <span class="mode-icon">{{ mode.icon }}</span>
-                <span class="mode-label">{{ mode.label }}</span>
+        <!-- Mod Seçici -->
+        <div class="mode-bar">
+            <button
+                *ngFor="let mode of availableModes"
+                class="mode-tab"
+                [class.active]="activeMode() === mode"
+                (click)="setMode(mode)">
+                <span class="mode-tab-icon">{{ modeConfig[mode].icon }}</span>
+                <span class="mode-tab-label">{{ modeConfig[mode].label }}</span>
             </button>
         </div>
 
-        <div class="chat-body" #scrollMe>
-            <div *ngFor="let msg of messages()" class="message" [class.user]="msg.role === 'user'" [class.ai]="msg.role === 'ai'">
-                <div class="bubble" [innerHTML]="msg.html ?? msg.text"></div>
-                <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
-            </div>
-            <div *ngIf="isLoading()" class="message ai loading">
-                <div class="bubble typing-indicator">
-                    <span></span><span></span><span></span>
-                </div>
-            </div>
+        <!-- Mevcut Mod Açıklaması -->
+        <div class="mode-hint">
+            <span>{{ currentModeConfig.description }}</span>
         </div>
 
+        <!-- Mesaj Alanı -->
+        <div class="chat-body" #scrollMe>
+
+            <!-- Mesajlar -->
+            <div *ngFor="let msg of messages(); let i = index"
+                 class="msg-row"
+                 [class.user-row]="msg.role === 'user'"
+                 [class.ai-row]="msg.role === 'ai'">
+
+                <!-- AI Avatar -->
+                <div *ngIf="msg.role === 'ai'" class="avatar ai-avatar">✦</div>
+
+                <div class="msg-col">
+                    <div class="bubble" [class.user-bubble]="msg.role === 'user'" [class.ai-bubble]="msg.role === 'ai'"
+                         [innerHTML]="msg.html ?? msg.text">
+                    </div>
+                    <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
+                </div>
+
+                <!-- Kullanıcı Avatar -->
+                <div *ngIf="msg.role === 'user'" class="avatar user-avatar">{{ userInitials }}</div>
+            </div>
+
+            <!-- Kampanya Onay Kartı -->
+            <div *ngIf="pendingApproval()" class="approval-card">
+                <div class="approval-header">
+                    <span class="approval-icon">🎯</span>
+                    <span class="approval-title">Kampanya Onayı Gerekiyor</span>
+                </div>
+                <p class="approval-desc">Yukarıdaki kampanya önerisini onaylıyor musunuz?</p>
+                <div class="approval-actions">
+                    <button class="btn-approve" (click)="approveCampaign('evet')" [disabled]="isLoading()">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Onayla
+                    </button>
+                    <button class="btn-reject" (click)="approveCampaign('hayır')" [disabled]="isLoading()">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                        İptal
+                    </button>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div *ngIf="isLoading()" class="msg-row ai-row">
+                <div class="avatar ai-avatar">✦</div>
+                <div class="bubble ai-bubble typing-bubble">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Hızlı Aksiyonlar (az mesaj varsa göster) -->
+        <div class="quick-actions" *ngIf="messages().length <= 1 && !isLoading()">
+            <button
+                *ngFor="let action of currentModeConfig.quickActions"
+                class="quick-chip"
+                (click)="useQuickAction(action)">
+                {{ action }}
+            </button>
+        </div>
+
+        <!-- Footer -->
         <div class="chat-footer">
-            <input 
-                type="text" 
-                [(ngModel)]="userInput" 
-                (keyup.enter)="sendMessage()" 
+            <input
+                type="text"
+                [(ngModel)]="userInput"
+                (keyup.enter)="sendMessage()"
                 [placeholder]="placeholder"
                 [disabled]="isLoading()"
+                maxlength="500"
+                autocomplete="off"
             />
-            <button (click)="sendMessage()" [disabled]="isLoading() || !userInput.trim()">➤</button>
+            <button
+                class="send-btn"
+                (click)="sendMessage()"
+                [disabled]="isLoading() || !userInput.trim()"
+                aria-label="Gönder">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
+
     </div>
 </div>
