@@ -1,5 +1,5 @@
 import { apiClient } from '@/shared/api/client';
-import type { Cafe, Category, Product } from '@/shared/types/api';
+import type { Cafe, Campaign, Category, Product, SearchProduct } from '@/shared/types/api';
 
 export interface ProductSearchParams {
   q?: string;
@@ -21,6 +21,14 @@ export const catalogApi = {
     const { data } = await apiClient.get<Product[]>(`/cafes/${slug}/products`);
     return data;
   },
+  async cafeCampaigns(slug: string): Promise<Campaign[]> {
+    const { data } = await apiClient.get<Campaign[]>(`/cafes/${slug}/campaigns`);
+    return data;
+  },
+  async campaigns(): Promise<Campaign[]> {
+    const { data } = await apiClient.get<Campaign[]>('/campaigns');
+    return data;
+  },
   async products(): Promise<Product[]> {
     const { data } = await apiClient.get<Product[]>('/products');
     return data;
@@ -29,8 +37,8 @@ export const catalogApi = {
     const { data } = await apiClient.get<Product>(`/products/${id}`);
     return data;
   },
-  async search(params: ProductSearchParams): Promise<Product[]> {
-    const { data } = await apiClient.get<Product[]>('/products/search', { params });
+  async search(params: ProductSearchParams): Promise<SearchProduct[]> {
+    const { data } = await apiClient.get<SearchProduct[]>('/products/search', { params });
     return data;
   },
   async categories(): Promise<Category[]> {

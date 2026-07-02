@@ -33,6 +33,15 @@ export interface ApiError {
   details?: unknown;
 }
 
+/** Safely extract a user-facing message from a rejected request (ApiError | Error | unknown). */
+export function apiErrorMessage(err: unknown, fallback = 'Bir hata oluştu'): string {
+  if (err && typeof err === 'object' && 'message' in err) {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg.length > 0) return msg;
+  }
+  return fallback;
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
   (error: AxiosError<{ message?: string; details?: unknown }>) => {

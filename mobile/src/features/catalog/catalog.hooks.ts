@@ -5,10 +5,12 @@ export const catalogKeys = {
   cafes: ['cafes'] as const,
   cafe: (slug: string) => ['cafes', slug] as const,
   cafeProducts: (slug: string) => ['cafes', slug, 'products'] as const,
+  cafeCampaigns: (slug: string) => ['cafes', slug, 'campaigns'] as const,
   products: ['products'] as const,
   product: (id: number) => ['products', id] as const,
   search: (params: ProductSearchParams) => ['products', 'search', params] as const,
   categories: ['categories'] as const,
+  campaigns: ['campaigns'] as const,
 };
 
 export const useCafes = () => useQuery({ queryKey: catalogKeys.cafes, queryFn: catalogApi.cafes });
@@ -35,3 +37,13 @@ export const useProductSearch = (params: ProductSearchParams) =>
 
 export const useCategories = () =>
   useQuery({ queryKey: catalogKeys.categories, queryFn: catalogApi.categories });
+
+export const useCampaigns = () =>
+  useQuery({ queryKey: catalogKeys.campaigns, queryFn: catalogApi.campaigns });
+
+export const useCafeCampaigns = (slug: string) =>
+  useQuery({
+    queryKey: catalogKeys.cafeCampaigns(slug),
+    queryFn: () => catalogApi.cafeCampaigns(slug),
+    enabled: !!slug,
+  });

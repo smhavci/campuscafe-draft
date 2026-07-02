@@ -21,7 +21,11 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: (input: CreateOrderInput) => ordersApi.create(input),
     onSuccess: () => {
+      // Placing an order changes orders, stars (me) and wallet balance.
       void qc.invalidateQueries({ queryKey: orderKeys.list });
+      void qc.invalidateQueries({ queryKey: ['me'] });
+      void qc.invalidateQueries({ queryKey: ['wallet', 'balance'] });
+      void qc.invalidateQueries({ queryKey: ['loyalty'] });
     },
   });
 }
@@ -31,7 +35,11 @@ export function useReorder() {
   return useMutation({
     mutationFn: (id: number) => ordersApi.reorder(id),
     onSuccess: () => {
+      // Reorder places a real order → same side effects as useCreateOrder.
       void qc.invalidateQueries({ queryKey: orderKeys.list });
+      void qc.invalidateQueries({ queryKey: ['me'] });
+      void qc.invalidateQueries({ queryKey: ['wallet', 'balance'] });
+      void qc.invalidateQueries({ queryKey: ['loyalty'] });
     },
   });
 }
