@@ -1,0 +1,45 @@
+# CampusCafe — one command to run the whole backend:
+#   docker compose up --build
+#
+# Brings up PostgreSQL (database "campuscafe") + the API.
+# Migrations are applied automatically on API startup.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: campuscafe-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-campuscafe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campuscafe}
+      POSTGRES_DB: ${POSTGRES_DB:-campuscafe}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - campuscafe_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-campuscafe} -d ${POSTGRES_DB:-campuscafe}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./api
+    container_name: campuscafe-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-campuscafe}:${POSTGRES_PASSWORD:-campuscafe}@postgres:5432/${POSTGRES_DB:-campuscafe}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-production-please}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    ports:
+      - '${API_PORT:-3000}:3000'
+
+volumes:
+  campuscafe_pgdata:

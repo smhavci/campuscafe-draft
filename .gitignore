@@ -1,12 +1,20 @@
-# Node modules
+# Dependencies
 node_modules/
 
-# Angular build
+# Build output
 dist/
+build/
 .angular/
 .cache/
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.*
+!.env.example
 
 # Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -14,12 +22,23 @@ yarn-error.log*
 # OS files
 .DS_Store
 
-# Environment files
-.env
-
-# IDE files
+# IDE
 .idea/
 .vscode/
 
 # Coverage
 coverage/
+
+# Expo / React Native
+.expo/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Never commit binary SQLite DBs
+*.db
+*.db-shm
+*.db-wal

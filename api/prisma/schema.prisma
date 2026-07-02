@@ -1,0 +1,318 @@
+// CampusCafe — Prisma schema (PostgreSQL)
+// Fresh, normalized rewrite of the legacy SQLite schema.
+// No seed data: the DB starts empty and is filled with real cafes/products later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ───────────────────────────────────────────────────
+enum Role {
+  student
+  teacher
+  cafeOwner
+}
+
+enum OrderStatus {
+  preparing
+  ready
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  credit_card
+  wallet
+  stars
+}
+
+enum OrderItemStatus {
+  active
+  cancelled
+}
+
+enum ProductOptionType {
+  radio
+  checkbox
+}
+
+enum TargetRole {
+  all
+  student
+  teacher
+}
+
+// ── Core ────────────────────────────────────────────────────
+model User {
+  id            Int      @id @default(autoincrement())
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  studentNumber String?  @unique @map("student_number")
+  email         String?  @unique
+  passwordHash  String   @map("password_hash")
+  role          Role     @default(student)
+  cafeId        Int?     @map("cafe_id")
+  stars         Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  cafe         Cafe?         @relation("CafeOwners", fields: [cafeId], references: [id])
+  orders       Order[]
+  wallet       UserWallet?
+  loyaltyCards LoyaltyCard[]
+  favorites    Favorite[]
+  savedDrinks  SavedDrink[]
+  reviews      Review[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  displayName String @map("display_name")
+  icon        String @default("")
+  description String @default("")
+
+  @@map("categories")
+}
+
+model Cafe {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  rating      Float    @default(0)
+  openHours   String?  @map("open_hours")
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  color       String   @default("#c8a97e")
+
+  products     Product[]
+  campaigns    Campaign[]
+  orders       Order[]
+  loyaltyCards LoyaltyCard[]
+  owners       User[]        @relation("CafeOwners")
+
+  @@map("cafes")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  cafeId      Int      @map("cafe_id")
+  name        String
+  category    String
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  image       String?
+  isAvailable Boolean  @default(true) @map("is_available")
+  calories    Int      @default(0)
+  allergens   String[] @default([])
+  ingredients String   @default("")
+  starCost    Int      @default(0) @map("star_cost")
+
+  cafe        Cafe            @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  options     ProductOption[] @relation("ProductToOptions")
+  orderItems  OrderItem[]
+  savedDrinks SavedDrink[]
+  favorites   Favorite[]
+  reviews     Review[]
+
+  @@index([cafeId])
+  @@index([category])
+  @@map("products")
+}
+
+model ProductOption {
+  id         Int               @id @default(autoincrement())
+  name       String
+  type       ProductOptionType @default(radio)
+  isRequired Boolean           @default(false) @map("is_required")
+
+  items    ProductOptionItem[]
+  products Product[]           @relation("ProductToOptions")
+
+  @@map("product_options")
+}
+
+model ProductOptionItem {
+  id         Int     @id @default(autoincrement())
+  optionId   Int     @map("option_id")
+  name       String
+  extraPrice Decimal @default(0) @map("extra_price") @db.Decimal(10, 2)
+
+  option          ProductOption     @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  orderItemOption OrderItemOption[]
+
+  @@index([optionId])
+  @@map("product_option_items")
+}
+
+model Campaign {
+  id                Int        @id @default(autoincrement())
+  cafeId            Int        @map("cafe_id")
+  title             String
+  description       String?
+  discount          String?
+  badge             String?
+  validUntil        DateTime?  @map("valid_until") @db.Date
+  image             String?
+  relatedProductIds Int[]      @default([]) @map("related_product_ids")
+  targetRole        TargetRole @default(all) @map("target_role")
+  starMultiplier    Int        @default(1) @map("star_multiplier")
+  isActive          Boolean    @default(true) @map("is_active")
+
+  cafe Cafe @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@index([cafeId])
+  @@map("campaigns")
+}
+
+// ── Orders ──────────────────────────────────────────────────
+model Order {
+  id            Int           @id @default(autoincrement())
+  userId        Int           @map("user_id")
+  cafeId        Int?          @map("cafe_id")
+  status        OrderStatus   @default(preparing)
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(10, 2)
+  starsSpent    Int           @default(0) @map("stars_spent")
+  pickupTime    DateTime?     @map("pickup_time")
+  paymentMethod PaymentMethod @default(credit_card) @map("payment_method")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user   User         @relation(fields: [userId], references: [id])
+  cafe   Cafe?        @relation(fields: [cafeId], references: [id])
+  items  OrderItem[]
+  events OrderEvent[]
+  reviews Review[]
+
+  @@index([userId])
+  @@index([cafeId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderEvent {
+  id        Int         @id @default(autoincrement())
+  orderId   Int         @map("order_id")
+  status    OrderStatus
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_events")
+}
+
+model OrderItem {
+  id           Int             @id @default(autoincrement())
+  orderId      Int             @map("order_id")
+  productId    Int             @map("product_id")
+  quantity     Int             @default(1)
+  unitPrice    Decimal         @map("unit_price") @db.Decimal(10, 2)
+  lineTotal    Decimal         @map("line_total") @db.Decimal(10, 2)
+  note         String          @default("")
+  status       OrderItemStatus @default(active)
+  cancelReason String          @default("") @map("cancel_reason")
+
+  order   Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product           @relation(fields: [productId], references: [id])
+  options OrderItemOption[]
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderItemOption {
+  id           Int     @id @default(autoincrement())
+  orderItemId  Int     @map("order_item_id")
+  optionItemId Int?    @map("option_item_id")
+  name         String?
+  price        Decimal @default(0) @db.Decimal(10, 2)
+
+  orderItem  OrderItem          @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  optionItem ProductOptionItem? @relation(fields: [optionItemId], references: [id])
+
+  @@index([orderItemId])
+  @@map("order_item_options")
+}
+
+// ── Wallet, loyalty, favorites, reviews, saved drinks ───────
+model UserWallet {
+  userId    Int      @id @map("user_id")
+  balance   Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_wallets")
+}
+
+model LoyaltyCard {
+  id            Int @id @default(autoincrement())
+  userId        Int @map("user_id")
+  cafeId        Int @map("cafe_id")
+  stamps        Int @default(0)
+  totalRedeemed Int @default(0) @map("total_redeemed")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafe Cafe @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cafeId])
+  @@map("loyalty_cards")
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  productId Int      @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+model SavedDrink {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  productId       Int      @map("product_id")
+  name            String
+  selectedOptions Json     @default("[]") @map("selected_options")
+  totalPrice      Decimal  @map("total_price") @db.Decimal(10, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_drinks")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  productId Int      @map("product_id")
+  orderId   Int      @map("order_id")
+  rating    Int
+  comment   String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, orderId])
+  @@index([productId])
+  @@map("reviews")
+}

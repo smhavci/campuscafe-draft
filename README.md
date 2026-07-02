@@ -1,67 +1,51 @@
-# CampusCafe - Smart Dining Management System
+# CampusCafe
 
-## Project Overview
-**CampusCafe** is a functional web application designed to optimize coffee and food ordering within a campus environment. It provides a seamless interface for students to order meals and a robust dashboard for cafe owners to manage their business.
+Smart campus dining app. Students browse cafes and menus, customize and place orders,
+track them in real time, and earn stars & loyalty stamps. Cafe owners manage their
+menu and campaigns and get a live orders dashboard with analytics.
 
-This project is submitted as part of **Homework 2: Website Development & AI Agent Planning**.
+Rebuilt from the ground up:
 
-## Core Features
-- **Real-time Menu:** Browse categories and products available at the campus cafe.
-- **Order Tracking:** Place orders and monitor their status (Pending, Completed, etc.).
-- **User Loyalty System:** Earn and track points.
-- **Admin Dashboard:** Comprehensive sales analytics and order management for owners.
-- **Campaign Management:** View and create specialized cafe promotions.
+- **Backend** — Node + Express + **TypeScript**, feature-modular layered architecture
+- **Database** — **PostgreSQL + Prisma** (migrations; no seed fixtures — real data only)
+- **Mobile** — **React Native (Expo + TypeScript)**, feature-sliced clean architecture
+- **Infra** — one-command **Docker Compose** (Postgres + API)
 
-## AI Agent Integration Plan
-As part of the future development phase, an AI-agent layer will be integrated to transform CampusCafe into a proactive system (Budget assistants, Predictive ordering, and Inventory advisors).
+> The previous Angular frontend and Express/SQLite backend are archived under
+> `legacy/` for reference. The old Python AI service has been removed.
 
-[**Click here to view the AI Agent Planning Document**](./docs/ai_agent_planning.md)
+## Quick start (backend)
 
----
+```bash
+docker compose up --build
+```
 
-## Setup & Run Instructions
+Starts PostgreSQL (database **`campuscafe`**) and the API at `http://localhost:3000`.
+Migrations apply automatically; the database starts **empty** and is filled with real
+cafes/products through the app. Health check: `GET /api/health`.
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18+ recommended)
-- [Angular CLI](https://angular.io/cli) (v17+)
+Configuration is via environment variables with sensible defaults — copy
+`.env.example` → `.env` to override (`POSTGRES_*`, `JWT_SECRET`, `API_PORT`, `CORS_ORIGIN`).
 
-### Backend Setup
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the server:
-   ```bash
-   npm start
-   ```
-    *The backend URL is centralized in `frontend/campuscafe-ui/src/app/core/config/api.config.ts`. By default, it points to the Render deployment.*
+## Quick start (mobile)
 
-### Frontend Setup
-1. Navigate to the `frontend/campuscafe-ui` directory:
-   ```bash
-   cd frontend/campuscafe-ui
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the application:
-   ```bash
-   npx ng serve
-   ```
-   *The website will be accessible at `http://localhost:4200`.*
+```bash
+cd mobile && npm install
+API_URL=http://<your-machine-ip>:3000 npx expo start
+```
 
----
+## Project layout
 
-## Technologies Used
-- **Frontend:** Angular, RxJS, Tailwind CSS
-- **Backend:** Node.js, Express.js
-- **Data:** In-memory JS data store (with init scripts)
-- **Documentation:** Markdown, Mermaid.js
+```
+api/     Node + Express + TS backend
+mobile/  React Native (Expo + TS) app
+legacy/  Archived old frontend + backend
+docs/    Historical planning documents + Rork design prompt
+docker-compose.yml
+```
 
-## Live Demo
-[CampusCafe Live Demo](https://campuscafe-draft.onrender.com)
+## Documentation (Claude Code skills)
+
+- [`.claude/skills/campuscafe`](.claude/skills/campuscafe/SKILL.md) — project overview & how to run
+- [`.claude/skills/campuscafe-api`](.claude/skills/campuscafe-api/SKILL.md) — backend architecture, modules, commands
+- [`.claude/skills/campuscafe-mobile`](.claude/skills/campuscafe-mobile/SKILL.md) — mobile clean architecture
